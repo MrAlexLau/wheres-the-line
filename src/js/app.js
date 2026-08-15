@@ -1,34 +1,31 @@
 import { Game, PHASES, ROUND_GOALS } from "./game.js";
 import { CONDITIONS, ACTIONS } from "../data/cards.js";
 
-const GOAL_INFO = {
-  [ROUND_GOALS.MOST]: {
-    title: "Goal: Find the MOST",
-    detail:
-      "The card just above the line scores a point. The card just below it — closest, but on the wrong side — loses a point.",
-  },
-  [ROUND_GOALS.LEAST]: {
-    title: "Goal: Find the LEAST",
-    detail:
-      "The card just below the line scores a point. The card just above it — closest, but on the wrong side — loses a point.",
-  },
-  [ROUND_GOALS.BETWEEN]: {
-    title: "Goal: Draw the line",
-    detail: "Both the card just above and just below the line score a point. No penalty this round.",
-  },
+const GOAL_TITLE = {
+  [ROUND_GOALS.MOST]: "Goal: Find the MOST",
+  [ROUND_GOALS.LEAST]: "Goal: Find the LEAST",
+  [ROUND_GOALS.BETWEEN]: "Goal: Draw the line",
 };
 
 /** What card to look for, given the round's goal — the answer to "what should I play?" */
 function submissionCriteria(goal, judgeName) {
   switch (goal) {
     case ROUND_GOALS.MOST:
-      return `Play the most extreme thing you think ${judgeName} would actually agree to do. Too tame and it lands on the "wouldn't do" side — you'll lose a point instead.`;
+      return `Play the MOST extreme thing you think ${judgeName} would actually agree to do. Too tame and it lands on the "wouldn't do" side — you'll lose a point instead.`;
     case ROUND_GOALS.LEAST:
-      return `Play something you think ${judgeName} would refuse to do. Too tame and it lands on the "would do" side — you'll lose a point instead.`;
+      return `Play something you think ${judgeName} would refuse to do — the LEAST they'd do. Too tame and it lands on the "would do" side — you'll lose a point instead.`;
     case ROUND_GOALS.BETWEEN:
     default:
-      return `Play something you think ${judgeName} would either happily do, or flat-out refuse. To win, land on either extreme — no penalty for missing this round.`;
+      return `Play something you think ${judgeName} would either happily do, or flat-out refuse — go for an extreme. No penalty for missing this round.`;
   }
+}
+
+/** A big, hard-to-miss callout answering "what card should I play?" */
+function renderCriteriaCallout(goal, judgeName) {
+  return el("div", { class: "criteria-callout" }, [
+    el("span", { class: "criteria-label", text: GOAL_TITLE[goal] }),
+    el("p", { class: "criteria-main", text: submissionCriteria(goal, judgeName) }),
+  ]);
 }
 
 const root = document.getElementById("app");
@@ -303,10 +300,7 @@ function renderConditionReveal() {
       document.createTextNode(game.condition),
     ])
   );
-  screen.appendChild(renderGoalBadge());
-  screen.appendChild(
-    el("p", { class: "subtitle criteria", text: submissionCriteria(game.roundGoal, game.judge.name) })
-  );
+  screen.appendChild(renderCriteriaCallout(game.roundGoal, game.judge.name));
   screen.appendChild(
     el("button", {
       class: "btn-primary",
@@ -333,13 +327,7 @@ function renderSubmitting() {
   const screen = el("div", { class: "screen" });
   screen.appendChild(el("p", { class: "subtitle", text: `${player.name}, pick your card for:` }));
   screen.appendChild(el("div", { class: "card condition" }, [document.createTextNode(game.condition)]));
-  screen.appendChild(renderGoalBadge());
-  screen.appendChild(
-    el("div", { class: "criteria-callout" }, [
-      el("span", { class: "criteria-label", text: "What to look for:" }),
-      document.createTextNode(submissionCriteria(game.roundGoal, game.judge.name)),
-    ])
-  );
+  screen.appendChild(renderCriteriaCallout(game.roundGoal, game.judge.name));
   screen.appendChild(el("h3", { text: "Your hand" }));
 
   const grid = el("div", { class: "hand-grid" });
@@ -360,18 +348,9 @@ function renderSubmitting() {
   return screen;
 }
 
-function renderGoalBadge() {
-  const info = GOAL_INFO[game.roundGoal];
-  return el("div", { class: "goal-badge" }, [
-    el("span", { class: "goal-title", text: info.title }),
-    el("span", { class: "goal-detail", text: info.detail }),
-  ]);
-}
-
 function renderJudging() {
   const screen = el("div", { class: "screen" });
   screen.appendChild(el("h2", { text: `${game.judge.name}, where's the line?` }));
-  screen.appendChild(renderGoalBadge());
   screen.appendChild(
     el("div", { class: "card condition" }, [
       el("span", { class: "card-kicker", text: "Condition" }),
@@ -381,26 +360,36 @@ function renderJudging() {
   screen.appendChild(
     el("p", {
       class: "subtitle",
-      text: "Drag to sort from most likely to least likely you'd actually do it, and drag the line to where you'd draw it — even above or below every card.",
+      text: "Drag each card into the bucket where it belongs. Within a bucket, drag to reorder — the card closest to the divide in each bucket is the one that counts.",
     })
   );
 
-  const ordered = game.orderedSubmissions();
   const container = el("div", { class: "judge-order" });
 
-  ordered.forEach(({ playerId, card }, index) => {
-    if (index === game.linePosition) {
-      container.appendChild(renderJudgeLineRow());
-    }
-    container.appendChild(renderJudgeCardRow(playerId, card));
-  });
-  if (game.linePosition === ordered.length) {
-    container.appendChild(renderJudgeLineRow());
-  }
+  const wouldCards = el("div", { class: "bucket-cards", "data-bucket": "would" });
+  const wouldBucket = el("div", { class: "bucket would-bucket" }, [
+    el("div", { class: "bucket-header would-header", text: "✅ Would do" }),
+    wouldCards,
+  ]);
 
+  const wouldntCards = el("div", { class: "bucket-cards", "data-bucket": "wouldnt" });
+  const wouldntBucket = el("div", { class: "bucket wouldnt-bucket" }, [
+    el("div", { class: "bucket-header wouldnt-header", text: "🚫 Wouldn't do" }),
+    wouldntCards,
+  ]);
+
+  const ordered = game.orderedSubmissions();
+  ordered.forEach(({ playerId, card }, index) => {
+    const target = index < game.linePosition ? wouldCards : wouldntCards;
+    target.appendChild(renderJudgeCardRow(playerId, card));
+  });
+
+  container.appendChild(wouldBucket);
+  container.appendChild(wouldntBucket);
   screen.appendChild(container);
-  initDragSort(container, (orderedIds, linePosition) => {
-    game.applyOrder(orderedIds, linePosition);
+
+  initBucketDragSort(wouldCards, wouldntCards, (wouldIds, wouldntIds) => {
+    game.applyOrder([...wouldIds, ...wouldntIds], wouldIds.length);
     render();
   });
 
@@ -443,27 +432,22 @@ function renderJudgeCardRow(playerId, card) {
   ]);
 }
 
-function renderJudgeLineRow() {
-  return el("div", { class: "order-row line-row", "data-sort-key": "line" }, [
-    el("span", { class: "drag-handle", "aria-hidden": "true", text: "⠿" }),
-    el("div", { class: "line-marker" }, [
-      el("span", { class: "line-label left", text: "← Would do" }),
-      el("span", { class: "line-label right", text: "Wouldn't do →" }),
-    ]),
-  ]);
-}
-
 /**
- * Enables pointer-based drag-to-reorder on `container`'s direct children
- * (each must carry a unique `data-sort-key`, e.g. "card:<playerId>" or
- * "line"). Works uniformly for mouse, touch, and pen via Pointer Events.
- * Calls `onDrop(orderedIds, linePosition)` once a drag ends, derived from
- * the final DOM order.
+ * Enables pointer-based drag-to-sort between two bucket containers
+ * (`wouldContainer`, `wouldntContainer`), each holding rows with a unique
+ * `data-sort-key="card:<playerId>"`. Works uniformly for mouse, touch, and
+ * pen via Pointer Events. A card can be dragged to reorder within its
+ * bucket or dropped into the other bucket entirely — including into an
+ * empty one. Calls `onDrop(wouldIds, wouldntIds)` once a drag ends, derived
+ * from the final DOM order of each bucket.
  */
-function initDragSort(container, onDrop) {
-  container.addEventListener("pointerdown", (e) => {
+function initBucketDragSort(wouldContainer, wouldntContainer, onDrop) {
+  const containers = [wouldContainer, wouldntContainer];
+  const wrapper = wouldContainer.closest(".judge-order");
+
+  wrapper.addEventListener("pointerdown", (e) => {
     const row = e.target.closest("[data-sort-key]");
-    if (!row || row.parentElement !== container) return;
+    if (!row) return;
     startDrag(row);
   });
 
@@ -485,19 +469,30 @@ function initDragSort(container, onDrop) {
       row.style.top = `${e.clientY - rowRect.height / 2}px`;
       const dragCenter = e.clientY;
 
-      const siblings = Array.from(container.querySelectorAll("[data-sort-key]"));
-      let targetIndex = siblings.length;
-      for (let i = 0; i < siblings.length; i++) {
-        const r = siblings[i].getBoundingClientRect();
+      let targetContainer = containers[0];
+      let bestDist = Infinity;
+      for (const c of containers) {
+        const r = c.getBoundingClientRect();
+        const dist = dragCenter < r.top ? r.top - dragCenter : dragCenter > r.bottom ? dragCenter - r.bottom : 0;
+        if (dist < bestDist) {
+          bestDist = dist;
+          targetContainer = c;
+        }
+      }
+
+      const rows = Array.from(targetContainer.querySelectorAll("[data-sort-key]"));
+      let targetIndex = rows.length;
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i].getBoundingClientRect();
         if (dragCenter < r.top + r.height / 2) {
           targetIndex = i;
           break;
         }
       }
-      if (targetIndex >= siblings.length) {
-        container.appendChild(placeholder);
+      if (targetIndex >= rows.length) {
+        targetContainer.appendChild(placeholder);
       } else {
-        container.insertBefore(placeholder, siblings[targetIndex]);
+        targetContainer.insertBefore(placeholder, rows[targetIndex]);
       }
     };
 
@@ -513,17 +508,12 @@ function initDragSort(container, onDrop) {
       row.style.left = "";
       row.style.width = "";
 
-      const finalKeys = Array.from(container.querySelectorAll("[data-sort-key]")).map((el) =>
-        el.getAttribute("data-sort-key")
-      );
-      const orderedIds = finalKeys
-        .filter((key) => key.startsWith("card:"))
-        .map((key) => key.slice("card:".length));
-      const linePosition = finalKeys
-        .slice(0, finalKeys.indexOf("line"))
-        .filter((key) => key.startsWith("card:")).length;
+      const idsFrom = (container) =>
+        Array.from(container.querySelectorAll("[data-sort-key]")).map((el) =>
+          el.getAttribute("data-sort-key").slice("card:".length)
+        );
 
-      onDrop(orderedIds, linePosition);
+      onDrop(idsFrom(wouldContainer), idsFrom(wouldntContainer));
     };
 
     window.addEventListener("pointermove", onMove);
@@ -538,7 +528,6 @@ function renderReveal() {
   screen.appendChild(
     el("p", { class: "subtitle", text: `Judged by ${game.judge.name} — for: "${game.condition}"` })
   );
-  screen.appendChild(renderGoalBadge());
 
   const list = el("div", { class: "submission-list" });
   for (const { playerId, card } of game.submissions) {

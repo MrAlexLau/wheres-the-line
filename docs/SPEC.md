@@ -63,22 +63,25 @@ extremes, not just whoever can write the funniest card.
 2. **Blind submission, one player at a time.** For each non-judge player in
    turn:
    - Interstitial: "Pass the device to <Player>."
-   - That player privately views their hand and taps one Action card to
+   - That player sees the Condition and a large, high-contrast **criteria
+     callout** stating exactly what to look for given this round's Goal
+     (e.g. "Play the MOST extreme thing you think <Judge> would actually
+     agree to do…") before they view their hand and tap one Action card to
      submit face-down. The card leaves their hand.
    - Screen advances to the next submitting player. The judge does not
      submit a card.
 3. **Judging.** Device passes back to the judge. All submitted actions are
-   shown shuffled and anonymized (no player names attached), as a
-   drag-to-reorder list. The judge:
-   - Drags cards to sort them from **most likely they'd do it** (top) to
-     **least likely** (bottom).
-   - Drags a dividing **line** — a row labeled "← Would do" on the left and
-     "Wouldn't do →" on the right — to wherever it belongs in that same
-     list, including **above every card** (they wouldn't do any of them)
-     or **below every card** (they'd do all of them).
-   The card immediately above the line is **the MOST** pick; the card
-   immediately below it is **the LEAST** pick. Either pick is simply absent
-   when the line sits at that extreme.
+   shown shuffled and anonymized (no player names attached), sorted into
+   two labeled, drag-and-drop buckets: **"✅ Would do"** on top and
+   **"🚫 Wouldn't do"** below. The judge:
+   - Drags each card into whichever bucket it belongs in.
+   - Drags within a bucket to order cards by how extreme they are — the
+     card nearest the divide in each bucket is the one that counts.
+   - Either bucket may end up empty (they wouldn't do any of them, or
+     they'd do all of them).
+   The bottom-most card in "Would do" is **the MOST** pick; the top-most
+   card in "Wouldn't do" is **the LEAST** pick. Either pick is simply
+   absent when its bucket is empty.
 4. **Reveal & scoring.** The app reveals which player played each submitted
    card, highlights whichever picks actually scored per the round's Goal,
    and awards one point each to those players' totals. Since each player
