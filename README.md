@@ -17,6 +17,7 @@ browser tab for the current game (v1 is pass-and-play only; see the spec's
 
 ```
 index.html              entry point
+package.json             npm scripts (dev server only — no build step)
 netlify.toml             Netlify build/redirect config
 src/
   css/styles.css         all styling
@@ -29,21 +30,26 @@ docs/
 
 ## Running locally
 
-No build tooling or install step is required — just serve the directory
-over HTTP (opening `index.html` directly via `file://` will fail because
-browsers block ES module imports from the filesystem).
-
-Any static server works, for example:
+There's still no build step — `npm install` only pulls in a tiny static
+file server (`http-server`) used for local dev, since opening `index.html`
+directly via `file://` fails (browsers block ES module imports from the
+filesystem).
 
 ```bash
-# Python (built in on most systems)
-python3 -m http.server 8000
-
-# or Node, if you have it
-npx serve .
+npm install
+npm run dev
 ```
 
-Then open `http://localhost:8000` in a browser.
+This serves the site at `http://localhost:8080` and opens it in your
+browser (`npm run devl` is an alias for the same command).
+
+Any other static server works too, if you'd rather not use npm at all:
+
+```bash
+python3 -m http.server 8000
+# or
+npx serve .
+```
 
 ## Deploying to Netlify
 

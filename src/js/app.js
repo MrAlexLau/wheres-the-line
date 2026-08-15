@@ -1,5 +1,20 @@
-import { Game, PHASES } from "./game.js";
+import { Game, PHASES, ROUND_GOALS } from "./game.js";
 import { CONDITIONS, ACTIONS } from "../data/cards.js";
+
+const GOAL_INFO = {
+  [ROUND_GOALS.MOST]: {
+    title: "Goal: Find the MOST",
+    detail: "Only the single card the judge would most do scores a point.",
+  },
+  [ROUND_GOALS.LEAST]: {
+    title: "Goal: Find the LEAST",
+    detail: "Only the single card the judge would least do scores a point.",
+  },
+  [ROUND_GOALS.BETWEEN]: {
+    title: "Goal: Draw the line",
+    detail: "Both the card just above and just below the line score a point.",
+  },
+};
 
 const root = document.getElementById("app");
 
@@ -7,8 +22,12 @@ const root = document.getElementById("app");
 let game = null;
 
 /** Setup-screen draft state, kept until a game is created. */
+function defaultPlayerNames(count) {
+  return Array.from({ length: count }, (_, i) => `Player ${i + 1}`);
+}
+
 let setup = {
-  players: ["", "", ""],
+  players: defaultPlayerNames(3),
   targetScore: 7,
   handSize: 7,
   error: "",
@@ -110,7 +129,7 @@ function renderSetup() {
         disabled: setup.players.length >= 8,
         onclick: () => {
           if (setup.players.length < 8) {
-            setup.players.push("");
+            setup.players.push(`Player ${setup.players.length + 1}`);
             render();
           }
         },
@@ -269,6 +288,7 @@ function renderConditionReveal() {
       document.createTextNode(game.condition),
     ])
   );
+  screen.appendChild(renderGoalBadge());
   screen.appendChild(
     el("button", {
       class: "btn-primary",
@@ -317,9 +337,18 @@ function renderSubmitting() {
   return screen;
 }
 
+function renderGoalBadge() {
+  const info = GOAL_INFO[game.roundGoal];
+  return el("div", { class: "goal-badge" }, [
+    el("span", { class: "goal-title", text: info.title }),
+    el("span", { class: "goal-detail", text: info.detail }),
+  ]);
+}
+
 function renderJudging() {
   const screen = el("div", { class: "screen" });
   screen.appendChild(el("h2", { text: `${game.judge.name}, where's the line?` }));
+  screen.appendChild(renderGoalBadge());
   screen.appendChild(
     el("div", { class: "card condition" }, [
       el("span", { class: "card-kicker", text: "Condition" }),
@@ -329,50 +358,41 @@ function renderJudging() {
   screen.appendChild(
     el("p", {
       class: "subtitle",
-      text: "Pick the MOST you'd do it for, and the LEAST — the point you'd refuse.",
+      text: "Drag to sort from most likely to least likely you'd actually do it, and drag the line to where you'd draw it — even above or below every card.",
     })
   );
 
-  const list = el("div", { class: "submission-list" });
-  for (const { playerId, card } of game.shuffledSubmissions) {
-    const isMost = game.mostPick === playerId;
-    const isLeast = game.leastPick === playerId;
-    const cardEl = el("div", { class: "card action" });
-    if (isMost) cardEl.classList.add("tag-most");
-    if (isLeast) cardEl.classList.add("tag-least");
+  const ordered = game.orderedSubmissions();
+  const container = el("div", { class: "judge-order" });
 
-    if (isMost) cardEl.appendChild(el("span", { class: "pick-tag most", text: "MOST" }));
-    if (isLeast) cardEl.appendChild(el("span", { class: "pick-tag least", text: "LEAST" }));
-    cardEl.appendChild(document.createElement("br"));
-    cardEl.appendChild(document.createTextNode(card));
-
-    const controls = el("div", { class: "judging-controls" }, [
-      el("button", {
-        class: `btn-secondary btn-most${isMost ? " active" : ""}`,
-        text: isMost ? "✓ The MOST" : "Mark as MOST",
-        onclick: () => {
-          game.pickMost(playerId);
-          render();
-        },
-      }),
-      el("button", {
-        class: `btn-secondary btn-least${isLeast ? " active" : ""}`,
-        text: isLeast ? "✓ The LEAST" : "Mark as LEAST",
-        onclick: () => {
-          game.pickLeast(playerId);
-          render();
-        },
-      }),
-    ]);
-    cardEl.appendChild(controls);
-    list.appendChild(cardEl);
+  ordered.forEach(({ playerId, card }, index) => {
+    if (index === game.linePosition) {
+      container.appendChild(renderJudgeLineRow());
+    }
+    container.appendChild(renderJudgeCardRow(playerId, card));
+  });
+  if (game.linePosition === ordered.length) {
+    container.appendChild(renderJudgeLineRow());
   }
-  screen.appendChild(list);
+
+  screen.appendChild(container);
+  initDragSort(container, (orderedIds, linePosition) => {
+    game.applyOrder(orderedIds, linePosition);
+    render();
+  });
+
+  const pending = game.pendingWinners().map((id) => game.players.find((p) => p.id === id).name);
+  screen.appendChild(
+    el("p", {
+      class: "subtitle",
+      text: pending.length > 0 ? `Would score right now: ${pending.join(", ")}` : "No one would score right now.",
+    })
+  );
 
   screen.appendChild(
     el("button", {
       class: "btn-primary",
-      text: "Confirm picks",
+      text: "Confirm the line",
       disabled: !game.canConfirmJudging(),
       onclick: () => {
         game.confirmJudging();
@@ -383,21 +403,133 @@ function renderJudging() {
   return screen;
 }
 
+function renderJudgeCardRow(playerId, card) {
+  return el("div", { class: "order-row card-row", "data-sort-key": `card:${playerId}` }, [
+    el("span", { class: "drag-handle", "aria-hidden": "true", text: "⠿" }),
+    el("div", { class: "card action order-card", text: card }),
+  ]);
+}
+
+function renderJudgeLineRow() {
+  return el("div", { class: "order-row line-row", "data-sort-key": "line" }, [
+    el("span", { class: "drag-handle", "aria-hidden": "true", text: "⠿" }),
+    el("div", { class: "line-marker" }, [
+      el("span", { class: "line-label left", text: "← Would do" }),
+      el("span", { class: "line-label right", text: "Wouldn't do →" }),
+    ]),
+  ]);
+}
+
+/**
+ * Enables pointer-based drag-to-reorder on `container`'s direct children
+ * (each must carry a unique `data-sort-key`, e.g. "card:<playerId>" or
+ * "line"). Works uniformly for mouse, touch, and pen via Pointer Events.
+ * Calls `onDrop(orderedIds, linePosition)` once a drag ends, derived from
+ * the final DOM order.
+ */
+function initDragSort(container, onDrop) {
+  container.addEventListener("pointerdown", (e) => {
+    const row = e.target.closest("[data-sort-key]");
+    if (!row || row.parentElement !== container) return;
+    startDrag(row);
+  });
+
+  function startDrag(row) {
+    const rowRect = row.getBoundingClientRect();
+    const placeholder = document.createElement("div");
+    placeholder.className = "sort-placeholder";
+    placeholder.style.height = `${rowRect.height}px`;
+    row.replaceWith(placeholder);
+
+    row.classList.add("dragging");
+    row.style.position = "fixed";
+    row.style.top = `${rowRect.top}px`;
+    row.style.left = `${rowRect.left}px`;
+    row.style.width = `${rowRect.width}px`;
+    document.body.appendChild(row);
+
+    const onMove = (e) => {
+      row.style.top = `${e.clientY - rowRect.height / 2}px`;
+      const dragCenter = e.clientY;
+
+      const siblings = Array.from(container.querySelectorAll("[data-sort-key]"));
+      let targetIndex = siblings.length;
+      for (let i = 0; i < siblings.length; i++) {
+        const r = siblings[i].getBoundingClientRect();
+        if (dragCenter < r.top + r.height / 2) {
+          targetIndex = i;
+          break;
+        }
+      }
+      if (targetIndex >= siblings.length) {
+        container.appendChild(placeholder);
+      } else {
+        container.insertBefore(placeholder, siblings[targetIndex]);
+      }
+    };
+
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+
+      placeholder.replaceWith(row);
+      row.classList.remove("dragging");
+      row.style.position = "";
+      row.style.top = "";
+      row.style.left = "";
+      row.style.width = "";
+
+      const finalKeys = Array.from(container.querySelectorAll("[data-sort-key]")).map((el) =>
+        el.getAttribute("data-sort-key")
+      );
+      const orderedIds = finalKeys
+        .filter((key) => key.startsWith("card:"))
+        .map((key) => key.slice("card:".length));
+      const linePosition = finalKeys
+        .slice(0, finalKeys.indexOf("line"))
+        .filter((key) => key.startsWith("card:")).length;
+
+      onDrop(orderedIds, linePosition);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  }
+}
+
 function renderReveal() {
   const screen = el("div", { class: "screen" });
   screen.appendChild(el("h2", { text: "Results" }));
   screen.appendChild(
     el("p", { class: "subtitle", text: `Judged by ${game.judge.name} — for: "${game.condition}"` })
   );
+  screen.appendChild(renderGoalBadge());
 
   const list = el("div", { class: "submission-list" });
   for (const { playerId, card } of game.submissions) {
     const player = game.players.find((p) => p.id === playerId);
     const isMost = game.mostPick === playerId;
     const isLeast = game.leastPick === playerId;
-    const row = el("div", { class: `reveal-row${isMost || isLeast ? " winner" : ""}` });
-    if (isMost) row.appendChild(el("span", { class: "pick-tag most", text: "MOST (+1)" }));
-    if (isLeast) row.appendChild(el("span", { class: "pick-tag least", text: "LEAST (+1)" }));
+    const scored = game.winners.includes(playerId);
+    const row = el("div", { class: `reveal-row${scored ? " winner" : ""}` });
+    if (isMost) {
+      row.appendChild(
+        el("span", {
+          class: `pick-tag most${scored ? "" : " unscored"}`,
+          text: scored ? "MOST (+1)" : "MOST",
+        })
+      );
+    }
+    if (isLeast) {
+      row.appendChild(
+        el("span", {
+          class: `pick-tag least${scored ? "" : " unscored"}`,
+          text: scored ? "LEAST (+1)" : "LEAST",
+        })
+      );
+    }
     row.appendChild(el("span", { class: "player-name", text: player.name }));
     row.appendChild(document.createTextNode(card));
     list.appendChild(row);
@@ -460,7 +592,7 @@ function renderGameOver() {
         text: "New game",
         onclick: () => {
           game = null;
-          setup = { players: ["", "", ""], targetScore: 7, handSize: 7, error: "" };
+          setup = { players: defaultPlayerNames(3), targetScore: 7, handSize: 7, error: "" };
           render();
         },
       }),

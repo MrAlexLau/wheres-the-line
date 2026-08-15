@@ -306,6 +306,12 @@ label {
   color: #2a0e14;
 }
 
+.pick-tag.unscored {
+  background: transparent;
+  border: 1px solid #3a3a52;
+  color: var(--text-muted);
+}
+
 /* --- Pass screen --- */
 
 .pass-screen {
@@ -335,26 +341,112 @@ label {
   gap: 0.75rem;
 }
 
-.judging-controls {
+/* --- Round goal badge --- */
+
+.goal-badge {
   display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  background: var(--bg-elevated);
+  border: 1px solid #3a3a52;
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+}
+
+.goal-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-2);
+}
+
+.goal-detail {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+/* --- Judge sort + line (drag-to-sort) --- */
+
+.judge-order {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  position: relative;
+}
+
+.order-row {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
-  margin-top: 0.6rem;
+  touch-action: none;
+  cursor: grab;
 }
 
-.judging-controls button {
+.order-row.dragging {
+  cursor: grabbing;
+  opacity: 0.9;
+  box-shadow: var(--shadow);
+  pointer-events: none;
+}
+
+.drag-handle {
+  flex: 0 0 auto;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  user-select: none;
+}
+
+.order-card {
   flex: 1;
-  padding: 0.55rem;
-  font-size: 0.85rem;
+  margin: 0;
+  padding: 0.9rem 1.1rem;
+  font-size: 0.98rem;
+  cursor: inherit;
+  user-select: none;
 }
 
-.judging-controls .btn-most.active {
-  background: var(--accent-3);
-  color: #0e2a1c;
+.order-card:hover {
+  transform: none;
 }
 
-.judging-controls .btn-least.active {
-  background: var(--accent);
-  color: #2a0e14;
+.sort-placeholder {
+  border: 2px dashed #4a4a66;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.line-row {
+  flex: 1;
+}
+
+.line-marker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  padding: 0.5rem 0.9rem;
+  background: linear-gradient(90deg, var(--accent-3), var(--accent));
+  border-radius: 10px;
+  user-select: none;
+}
+
+.line-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #1a1420;
+  white-space: nowrap;
+}
+
+.line-label.left {
+  margin-right: auto;
+}
+
+.line-label.right {
+  margin-left: auto;
 }
 
 /* --- Reveal --- */

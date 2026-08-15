@@ -39,6 +39,7 @@ extremes, not just whoever can write the funniest card.
 | The LEAST pick | The action that crosses the judge's line — the least they'd do / first thing they'd refuse. Scores a point for its player. |
 | Hand | The set of Action cards a player currently holds (default size: 7). |
 | Round | One full cycle: condition drawn → submissions → judging → scoring → hand refill. |
+| Round Goal | Which pick(s) score this round: MOST only, LEAST only, or both ("in between"). Randomly chosen each round; see §4a. |
 
 ## 3. Players & Setup
 
@@ -57,7 +58,8 @@ extremes, not just whoever can write the funniest card.
 
 1. **Judge reveal.** Screen announces the round's judge and shows a "pass
    the device to <Judge>" interstitial, then displays the drawn Condition
-   card. The judge taps "Start round" once everyone is ready.
+   card and the round's **Goal** (see §4a). The judge taps "Start round"
+   once everyone is ready.
 2. **Blind submission, one player at a time.** For each non-judge player in
    turn:
    - Interstitial: "Pass the device to <Player>."
@@ -66,25 +68,49 @@ extremes, not just whoever can write the funniest card.
    - Screen advances to the next submitting player. The judge does not
      submit a card.
 3. **Judging.** Device passes back to the judge. All submitted actions are
-   shown shuffled and anonymized (no player names attached). The judge taps
-   to select:
-   - One card as **the MOST** they would do.
-   - A different card as **the LEAST** they would do.
-   Both picks are required before confirming.
+   shown shuffled and anonymized (no player names attached), as a
+   drag-to-reorder list. The judge:
+   - Drags cards to sort them from **most likely they'd do it** (top) to
+     **least likely** (bottom).
+   - Drags a dividing **line** — a row labeled "← Would do" on the left and
+     "Wouldn't do →" on the right — to wherever it belongs in that same
+     list, including **above every card** (they wouldn't do any of them)
+     or **below every card** (they'd do all of them).
+   The card immediately above the line is **the MOST** pick; the card
+   immediately below it is **the LEAST** pick. Either pick is simply absent
+   when the line sits at that extreme.
 4. **Reveal & scoring.** The app reveals which player played each submitted
-   card, highlights the MOST and LEAST picks, and awards one point each to
-   those two players' totals. If a single player's card is impossible to
-   pick twice (each player only submits one card per round, so MOST and
-   LEAST are always two different players as long as ≥2 submitters exist,
-   which the player minimum guarantees).
+   card, highlights whichever picks actually scored per the round's Goal,
+   and awards one point each to those players' totals. Since each player
+   submits at most one card per round and the line always separates two
+   distinct cards, MOST and LEAST — when both apply — are always two
+   different players.
 5. **Hand refill.** Every player who submitted a card draws back up to their
    hand size from the Action deck. If the deck runs out, the discard pile
    (previously submitted/seen cards) is reshuffled into a new deck.
 6. **Next judge.** Judge role passes to the next player in order; a new
-   Condition card is drawn; return to step 1.
+   Condition card is drawn and a new round Goal is chosen; return to step 1.
 7. **Win check.** After scoring, if any player's total ≥ target score, the
    game ends immediately and the Game Over screen is shown instead of
    advancing to the next round.
+
+### 4a. Round Goals
+
+Each round is randomly assigned one of these Goals, shown to the table
+alongside the Condition card:
+
+| Goal | Who scores | Eligibility |
+|---|---|---|
+| **Most likely to do** | Only the MOST pick (card just above the line) | Always available |
+| **Least likely to do** | Only the LEAST pick (card just below the line) | Always available |
+| **Anything in between scores** | Both the MOST and LEAST picks | Only offered when there are **3+ submitters (4+ total players)** |
+
+The "in between" goal is excluded below 4 players because with only 2
+submitters, the line has nowhere else to go — MOST and LEAST are always
+just the same two cards, so there's no real judgment being tested. If the
+line ends up at an extreme (above/below every card) in a round whose Goal
+needs that missing side, nobody scores that round — a legitimate outcome,
+not an error state.
 
 ## 5. Scoring & End of Game
 

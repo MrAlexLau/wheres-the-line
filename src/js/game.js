@@ -25,6 +25,27 @@ export const PHASES = {
   GAME_OVER: "GAME_OVER",
 };
 
+/**
+ * A round's goal decides which side(s) of the line actually score:
+ * - MOST: only the card just above the line scores.
+ * - LEAST: only the card just below the line scores.
+ * - BETWEEN: both cards touching the line score (the original two-point
+ *   rule). Only offered when there are enough submitters (3+, i.e. 4+
+ *   players) for "the line" to be a meaningful middle rather than just the
+ *   only two cards on the table.
+ */
+export const ROUND_GOALS = {
+  MOST: "MOST",
+  LEAST: "LEAST",
+  BETWEEN: "BETWEEN",
+};
+
+function pickRoundGoal(submitterCount) {
+  const options = [ROUND_GOALS.MOST, ROUND_GOALS.LEAST];
+  if (submitterCount >= 3) options.push(ROUND_GOALS.BETWEEN);
+  return options[Math.floor(Math.random() * options.length)];
+}
+
 function shuffle(array) {
   const result = array.slice();
   for (let i = result.length - 1; i > 0; i--) {
@@ -95,11 +116,22 @@ export class Game {
     /** index into non-judge submission order, for pass-and-play turn taking */
     this.submitOrder = this.nonJudgePlayers().map((p) => p.id);
     this.submitCursor = 0;
+    this.roundGoal = pickRoundGoal(this.submitOrder.length);
 
-    /** shuffled, anonymized view built when entering JUDGING */
-    this.shuffledSubmissions = [];
-    this.mostPick = null; // playerId
-    this.leastPick = null; // playerId
+    /**
+     * Ordering the judge is building during JUDGING: playerIds sorted from
+     * "most likely to do" (index 0) to "least likely to do" (last index).
+     * Anonymized — the judge only sees card text, not names, while sorting.
+     */
+    this.orderedIds = [];
+    /**
+     * Index of the dividing line within orderedIds: cards at indices
+     * [0, linePosition) are on the "would do" side, cards at
+     * [linePosition, length) are on the "wouldn't do" side. Can sit at
+     * either end (0 or orderedIds.length) when the judge decides every card
+     * — or none of them — clears their line.
+     */
+    this.linePosition = 0;
     this.winners = [];
   }
 
@@ -148,42 +180,79 @@ export class Game {
 
   beginJudging() {
     this.phase = PHASES.JUDGING;
-    this.shuffledSubmissions = shuffle(this.submissions);
-    this.mostPick = null;
-    this.leastPick = null;
+    this.orderedIds = shuffle(this.submissions.map((s) => s.playerId));
+    this.linePosition = Math.floor(this.orderedIds.length / 2);
   }
 
-  /** playerId whose submission is currently marked as "the MOST". */
-  pickMost(playerId) {
-    if (this.phase !== PHASES.JUDGING) return;
-    if (playerId === this.leastPick) return; // can't be both
-    this.mostPick = playerId;
+  /** Current judging order as {playerId, card} pairs, most-likely first. */
+  orderedSubmissions() {
+    return this.orderedIds.map((playerId) => ({
+      playerId,
+      card: this.submissions.find((s) => s.playerId === playerId).card,
+    }));
   }
 
-  pickLeast(playerId) {
+  /**
+   * Set the full judging order and line position in one go — used by the
+   * drag-to-sort UI, which resolves both the card order and the line's slot
+   * from a single drop. `orderedIds` must be a permutation of this round's
+   * submitting playerIds; `linePosition` may sit anywhere from 0 (line
+   * above every card — the judge wouldn't do any of them) to
+   * `orderedIds.length` (line below every card — they'd do all of them).
+   */
+  applyOrder(orderedIds, linePosition) {
     if (this.phase !== PHASES.JUDGING) return;
-    if (playerId === this.mostPick) return;
-    this.leastPick = playerId;
+    const expected = new Set(this.submissions.map((s) => s.playerId));
+    const isPermutation =
+      orderedIds.length === expected.size && orderedIds.every((id) => expected.has(id));
+    if (!isPermutation) {
+      throw new Error("orderedIds must be a permutation of this round's submissions.");
+    }
+    this.orderedIds = orderedIds.slice();
+    this.linePosition = Math.min(Math.max(linePosition, 0), orderedIds.length);
+  }
+
+  /** playerId whose submission is immediately above the line ("the MOST"). */
+  get mostPick() {
+    return this.orderedIds[this.linePosition - 1] ?? null;
+  }
+
+  /** playerId whose submission is immediately below the line ("the LEAST"). */
+  get leastPick() {
+    return this.orderedIds[this.linePosition] ?? null;
+  }
+
+  /** playerIds that would score a point if confirmed right now, given the round's goal. */
+  pendingWinners() {
+    const recipients = [];
+    if (
+      (this.roundGoal === ROUND_GOALS.MOST || this.roundGoal === ROUND_GOALS.BETWEEN) &&
+      this.mostPick
+    ) {
+      recipients.push(this.mostPick);
+    }
+    if (
+      (this.roundGoal === ROUND_GOALS.LEAST || this.roundGoal === ROUND_GOALS.BETWEEN) &&
+      this.leastPick
+    ) {
+      recipients.push(this.leastPick);
+    }
+    return recipients;
   }
 
   canConfirmJudging() {
-    return (
-      this.phase === PHASES.JUDGING &&
-      this.mostPick !== null &&
-      this.leastPick !== null &&
-      this.mostPick !== this.leastPick
-    );
+    return this.phase === PHASES.JUDGING;
   }
 
   confirmJudging() {
     if (!this.canConfirmJudging()) {
-      throw new Error("Both a MOST and a LEAST pick (two different players) are required.");
+      throw new Error("Not currently judging.");
     }
-    const mostPlayer = this.players.find((p) => p.id === this.mostPick);
-    const leastPlayer = this.players.find((p) => p.id === this.leastPick);
-    mostPlayer.score += 1;
-    leastPlayer.score += 1;
-    this.winners = [mostPlayer.id, leastPlayer.id];
+    const recipients = this.pendingWinners();
+    for (const id of recipients) {
+      this.players.find((p) => p.id === id).score += 1;
+    }
+    this.winners = recipients;
 
     for (const { card } of this.submissions) {
       this.actionDeck.discard(card);
@@ -220,11 +289,11 @@ export class Game {
     this.judgeIndex = (this.judgeIndex + 1) % this.players.length;
     this.condition = this.conditionDeck.draw();
     this.submissions = [];
-    this.shuffledSubmissions = [];
-    this.mostPick = null;
-    this.leastPick = null;
+    this.orderedIds = [];
+    this.linePosition = 0;
     this.submitOrder = this.nonJudgePlayers().map((p) => p.id);
     this.submitCursor = 0;
+    this.roundGoal = pickRoundGoal(this.submitOrder.length);
     this.phase = PHASES.ROUND_INTRO;
   }
 }
