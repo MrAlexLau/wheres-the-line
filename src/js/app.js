@@ -4,17 +4,32 @@ import { CONDITIONS, ACTIONS } from "../data/cards.js";
 const GOAL_INFO = {
   [ROUND_GOALS.MOST]: {
     title: "Goal: Find the MOST",
-    detail: "Only the single card the judge would most do scores a point.",
+    detail:
+      "The card just above the line scores a point. The card just below it — closest, but on the wrong side — loses a point.",
   },
   [ROUND_GOALS.LEAST]: {
     title: "Goal: Find the LEAST",
-    detail: "Only the single card the judge would least do scores a point.",
+    detail:
+      "The card just below the line scores a point. The card just above it — closest, but on the wrong side — loses a point.",
   },
   [ROUND_GOALS.BETWEEN]: {
     title: "Goal: Draw the line",
-    detail: "Both the card just above and just below the line score a point.",
+    detail: "Both the card just above and just below the line score a point. No penalty this round.",
   },
 };
+
+/** What card to look for, given the round's goal — the answer to "what should I play?" */
+function submissionCriteria(goal, judgeName) {
+  switch (goal) {
+    case ROUND_GOALS.MOST:
+      return `Play the most extreme thing you think ${judgeName} would actually agree to do. Too tame and it lands on the "wouldn't do" side — you'll lose a point instead.`;
+    case ROUND_GOALS.LEAST:
+      return `Play something you think ${judgeName} would refuse to do. Too tame and it lands on the "would do" side — you'll lose a point instead.`;
+    case ROUND_GOALS.BETWEEN:
+    default:
+      return `Play something you think ${judgeName} would either happily do, or flat-out refuse. To win, land on either extreme — no penalty for missing this round.`;
+  }
+}
 
 const root = document.getElementById("app");
 
@@ -29,7 +44,7 @@ function defaultPlayerNames(count) {
 let setup = {
   players: defaultPlayerNames(3),
   targetScore: 7,
-  handSize: 7,
+  handSize: 5,
   error: "",
 };
 
@@ -161,7 +176,7 @@ function renderSetup() {
         max: "10",
         value: String(setup.handSize),
         oninput: (e) => {
-          setup.handSize = Number(e.target.value) || 7;
+          setup.handSize = Number(e.target.value) || 5;
         },
       }),
     ])
@@ -279,7 +294,7 @@ function renderConditionReveal() {
   screen.appendChild(
     el("p", {
       class: "subtitle",
-      text: "Everyone else, get ready to answer: what would you do for this?",
+      text: "Everyone else is about to secretly submit a card. Read the goal below before you start.",
     })
   );
   screen.appendChild(
@@ -289,6 +304,9 @@ function renderConditionReveal() {
     ])
   );
   screen.appendChild(renderGoalBadge());
+  screen.appendChild(
+    el("p", { class: "subtitle criteria", text: submissionCriteria(game.roundGoal, game.judge.name) })
+  );
   screen.appendChild(
     el("button", {
       class: "btn-primary",
@@ -313,10 +331,15 @@ function renderSubmitting() {
   }
 
   const screen = el("div", { class: "screen" });
-  screen.appendChild(
-    el("p", { class: "subtitle", text: `${player.name}, pick your card for:` })
-  );
+  screen.appendChild(el("p", { class: "subtitle", text: `${player.name}, pick your card for:` }));
   screen.appendChild(el("div", { class: "card condition" }, [document.createTextNode(game.condition)]));
+  screen.appendChild(renderGoalBadge());
+  screen.appendChild(
+    el("div", { class: "criteria-callout" }, [
+      el("span", { class: "criteria-label", text: "What to look for:" }),
+      document.createTextNode(submissionCriteria(game.roundGoal, game.judge.name)),
+    ])
+  );
   screen.appendChild(el("h3", { text: "Your hand" }));
 
   const grid = el("div", { class: "hand-grid" });
@@ -381,13 +404,23 @@ function renderJudging() {
     render();
   });
 
-  const pending = game.pendingWinners().map((id) => game.players.find((p) => p.id === id).name);
+  const outcome = game.pendingOutcome();
+  const scorerNames = outcome.scorers.map((id) => game.players.find((p) => p.id === id).name);
+  const loserNames = outcome.losers.map((id) => game.players.find((p) => p.id === id).name);
   screen.appendChild(
     el("p", {
       class: "subtitle",
-      text: pending.length > 0 ? `Would score right now: ${pending.join(", ")}` : "No one would score right now.",
+      text: scorerNames.length > 0 ? `Would score right now: ${scorerNames.join(", ")}` : "No one would score right now.",
     })
   );
+  if (loserNames.length > 0) {
+    screen.appendChild(
+      el("p", {
+        class: "subtitle penalty-preview",
+        text: `Would lose a point right now: ${loserNames.join(", ")}`,
+      })
+    );
+  }
 
   screen.appendChild(
     el("button", {
@@ -513,20 +546,21 @@ function renderReveal() {
     const isMost = game.mostPick === playerId;
     const isLeast = game.leastPick === playerId;
     const scored = game.winners.includes(playerId);
-    const row = el("div", { class: `reveal-row${scored ? " winner" : ""}` });
+    const lost = game.losers.includes(playerId);
+    const row = el("div", { class: `reveal-row${scored ? " winner" : ""}${lost ? " loser" : ""}` });
     if (isMost) {
       row.appendChild(
         el("span", {
-          class: `pick-tag most${scored ? "" : " unscored"}`,
-          text: scored ? "MOST (+1)" : "MOST",
+          class: `pick-tag most${scored ? "" : lost ? " penalty" : " unscored"}`,
+          text: scored ? "MOST (+1)" : lost ? "MOST (-1)" : "MOST",
         })
       );
     }
     if (isLeast) {
       row.appendChild(
         el("span", {
-          class: `pick-tag least${scored ? "" : " unscored"}`,
-          text: scored ? "LEAST (+1)" : "LEAST",
+          class: `pick-tag least${scored ? "" : lost ? " penalty" : " unscored"}`,
+          text: scored ? "LEAST (+1)" : lost ? "LEAST (-1)" : "LEAST",
         })
       );
     }
@@ -592,7 +626,7 @@ function renderGameOver() {
         text: "New game",
         onclick: () => {
           game = null;
-          setup = { players: defaultPlayerNames(3), targetScore: 7, handSize: 7, error: "" };
+          setup = { players: defaultPlayerNames(3), targetScore: 7, handSize: 5, error: "" };
           render();
         },
       }),

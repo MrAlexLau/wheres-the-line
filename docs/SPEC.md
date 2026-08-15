@@ -50,7 +50,7 @@ extremes, not just whoever can write the funniest card.
 - Setup screen collects:
   - Player names (add/remove, reorder).
   - Target score to win (default 7, editable 3–15).
-  - Hand size (default 7, editable 5–10).
+  - Hand size (default 5, editable 5–10).
 - Judge order is the order players were added; judge rotates left each
   round.
 
@@ -99,11 +99,17 @@ extremes, not just whoever can write the funniest card.
 Each round is randomly assigned one of these Goals, shown to the table
 alongside the Condition card:
 
-| Goal | Who scores | Eligibility |
-|---|---|---|
-| **Most likely to do** | Only the MOST pick (card just above the line) | Always available |
-| **Least likely to do** | Only the LEAST pick (card just below the line) | Always available |
-| **Anything in between scores** | Both the MOST and LEAST picks | Only offered when there are **3+ submitters (4+ total players)** |
+| Goal | Who scores (+1) | Who's penalized (-1) | Eligibility |
+|---|---|---|---|
+| **Most likely to do** | MOST pick (card just above the line) | LEAST pick — the closest card that still landed on the "wouldn't do" side | Always available |
+| **Least likely to do** | LEAST pick (card just below the line) | MOST pick — the closest card that still landed on the "would do" side | Always available |
+| **Anything in between scores** | Both the MOST and LEAST picks | Nobody | Only offered when there are **3+ submitters (4+ total players)** |
+
+A player's score never drops below 0 from a penalty. Submitters are told
+the active Goal (and what to look for) before they pick a card, since it
+changes the right answer: in a "most" round, playing something too tame
+risks landing on the wrong side of the line and losing a point instead of
+just failing to score.
 
 The "in between" goal is excluded below 4 players because with only 2
 submitters, the line has nowhere else to go — MOST and LEAST are always

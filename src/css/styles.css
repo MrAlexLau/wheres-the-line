@@ -98,6 +98,37 @@ h3 {
   font-size: 0.9rem;
 }
 
+.subtitle.criteria {
+  color: var(--text);
+  font-weight: 600;
+  margin-top: 0;
+}
+
+.subtitle.penalty-preview {
+  color: var(--accent);
+  margin-top: -0.5rem;
+}
+
+.criteria-callout {
+  background: rgba(255, 209, 102, 0.1);
+  border: 1px solid var(--accent-2);
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.criteria-label {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 800;
+  color: var(--accent-2);
+  margin-bottom: 0.25rem;
+}
+
 /* --- Buttons & inputs --- */
 
 button {
@@ -312,6 +343,12 @@ label {
   color: var(--text-muted);
 }
 
+.pick-tag.penalty {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+
 /* --- Pass screen --- */
 
 .pass-screen {
@@ -465,7 +502,12 @@ label {
 }
 
 .reveal-row.winner {
+  border: 1px solid var(--accent-3);
+}
+
+.reveal-row.loser {
   border: 1px solid var(--accent);
+  background: rgba(255, 93, 115, 0.08);
 }
 
 /* --- Scoreboard --- */

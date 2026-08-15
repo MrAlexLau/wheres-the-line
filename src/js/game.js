@@ -87,7 +87,7 @@ export class Game {
    * @param {number} [opts.targetScore]
    * @param {number} [opts.handSize]
    */
-  constructor({ playerNames, conditions, actions, targetScore = 7, handSize = 7 }) {
+  constructor({ playerNames, conditions, actions, targetScore = 7, handSize = 5 }) {
     if (playerNames.length < 3) {
       throw new Error("Where's the Line requires at least 3 players.");
     }
@@ -133,6 +133,7 @@ export class Game {
      */
     this.linePosition = 0;
     this.winners = [];
+    this.losers = [];
   }
 
   dealUpToHandSize(player) {
@@ -222,22 +223,32 @@ export class Game {
     return this.orderedIds[this.linePosition] ?? null;
   }
 
-  /** playerIds that would score a point if confirmed right now, given the round's goal. */
-  pendingWinners() {
-    const recipients = [];
-    if (
-      (this.roundGoal === ROUND_GOALS.MOST || this.roundGoal === ROUND_GOALS.BETWEEN) &&
-      this.mostPick
-    ) {
-      recipients.push(this.mostPick);
+  /**
+   * What would happen if judging were confirmed right now, given the round's
+   * goal: `scorers` gain a point, `losers` lose one.
+   *
+   * - MOST: the card just above the line (mostPick) scores; the card just
+   *   below it (leastPick) — the closest one that landed on the "wouldn't
+   *   do" side — loses a point.
+   * - LEAST: the card just below the line (leastPick) scores; the card just
+   *   above it (mostPick) — the closest one that landed on the "would do"
+   *   side — loses a point.
+   * - BETWEEN: both mostPick and leastPick score; nobody loses a point.
+   */
+  pendingOutcome() {
+    const scorers = [];
+    const losers = [];
+    if (this.roundGoal === ROUND_GOALS.MOST) {
+      if (this.mostPick) scorers.push(this.mostPick);
+      if (this.leastPick) losers.push(this.leastPick);
+    } else if (this.roundGoal === ROUND_GOALS.LEAST) {
+      if (this.leastPick) scorers.push(this.leastPick);
+      if (this.mostPick) losers.push(this.mostPick);
+    } else {
+      if (this.mostPick) scorers.push(this.mostPick);
+      if (this.leastPick) scorers.push(this.leastPick);
     }
-    if (
-      (this.roundGoal === ROUND_GOALS.LEAST || this.roundGoal === ROUND_GOALS.BETWEEN) &&
-      this.leastPick
-    ) {
-      recipients.push(this.leastPick);
-    }
-    return recipients;
+    return { scorers, losers };
   }
 
   canConfirmJudging() {
@@ -248,11 +259,16 @@ export class Game {
     if (!this.canConfirmJudging()) {
       throw new Error("Not currently judging.");
     }
-    const recipients = this.pendingWinners();
-    for (const id of recipients) {
+    const { scorers, losers } = this.pendingOutcome();
+    for (const id of scorers) {
       this.players.find((p) => p.id === id).score += 1;
     }
-    this.winners = recipients;
+    for (const id of losers) {
+      const player = this.players.find((p) => p.id === id);
+      player.score = Math.max(0, player.score - 1);
+    }
+    this.winners = scorers;
+    this.losers = losers;
 
     for (const { card } of this.submissions) {
       this.actionDeck.discard(card);
@@ -291,6 +307,7 @@ export class Game {
     this.submissions = [];
     this.orderedIds = [];
     this.linePosition = 0;
+    this.losers = [];
     this.submitOrder = this.nonJudgePlayers().map((p) => p.id);
     this.submitCursor = 0;
     this.roundGoal = pickRoundGoal(this.submitOrder.length);
