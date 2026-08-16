@@ -59,13 +59,17 @@ function unmount() {
 // ---------- data refresh ----------
 
 async function refreshAndRender() {
+  const before = stateSnapshot();
   try {
     const hasRoom = await refresh();
     if (!hasRoom) return;
   } catch (err) {
     state.ui.error = err.message;
   }
-  render();
+  // Polling happens every two seconds. Replacing the entire DOM when the
+  // shared game state is unchanged makes the lobby visibly flash (and can
+  // interrupt typing), so only render when the snapshot actually changed.
+  if (before !== stateSnapshot()) render();
 }
 
 async function refresh() {
@@ -232,6 +236,19 @@ function render() {
     default:
       return root.appendChild(el("div", { text: "Unknown screen." }));
   }
+}
+
+function stateSnapshot() {
+  return JSON.stringify({
+    screen: state.screen,
+    room: state.room,
+    players: state.players,
+    round: state.round,
+    submissions: state.submissions,
+    judgingSlots: state.judgingSlots,
+    myHand: state.myHand,
+    error: state.ui.error,
+  });
 }
 
 function renderHostSetup() {
