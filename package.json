@@ -1,6 +1,6 @@
 {
   "name": "wheres-the-line",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A pass-and-play party game about knowing where your friends draw the line.",
   "private": true,
   "type": "module",
@@ -9,7 +9,8 @@
     "devl": "npm run dev",
     "build": "vite build",
     "preview": "vite preview",
-    "dev:mp": "netlify dev"
+    "dev:mp": "netlify dev",
+    "bump": "node scripts/bump-version.mjs"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
