@@ -98,6 +98,14 @@ h3 {
   font-size: 0.9rem;
 }
 
+.pass-and-play-link {
+  margin: 1rem 0 0;
+}
+
+.pass-and-play-link a {
+  color: var(--text);
+}
+
 .criteria-callout {
   background: rgba(255, 209, 102, 0.12);
   border: 2px solid var(--accent-2);

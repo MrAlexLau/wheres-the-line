@@ -31,7 +31,7 @@ function renderHome() {
       el("button", { class: "btn-secondary", text: "Join a room", onclick: () => mountRoomApp(root, "join", renderHome) }),
     ])
   );
-  const passLink = el("p", { class: "subtitle" });
+  const passLink = el("p", { class: "subtitle pass-and-play-link" });
   passLink.appendChild(document.createTextNode("Only one device? "));
   passLink.appendChild(el("a", { href: "/pass-and-play/", text: "Play pass-and-play instead" }));
   passLink.appendChild(document.createTextNode("."));
