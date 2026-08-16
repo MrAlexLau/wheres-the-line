@@ -12,9 +12,13 @@
   let frozenWould = [];
   $: if (!dragging) frozenWould = wouldSlots;
 
-  async function handleDrop(orderedIds) {
-    await applyOrderAction(orderedIds);
+  function handleDrop(orderedIds) {
+    // applyOrderAction patches the store synchronously before its first
+    // await — safe to unfreeze immediately instead of waiting on the
+    // network write. See client.js.
+    const pending = applyOrderAction(orderedIds);
     dragging = false;
+    pending.catch((err) => uiError.set(err.message));
   }
 </script>
 

@@ -30,9 +30,14 @@
   // itself instead of reconciling on top of this action's own manual
   // move. See dragSort.js for why doing it the other way around doubled
   // cards.
-  async function handleDrop(wouldIds, neutralIds, wouldntIds) {
-    await applyBucketsAction(wouldIds, wouldntIds, neutralIds);
+  function handleDrop(wouldIds, neutralIds, wouldntIds) {
+    // applyBucketsAction patches the store synchronously before its first
+    // await, so by the time this call returns (even un-awaited) the store
+    // already holds the new arrangement — safe to unfreeze immediately
+    // instead of waiting on the network write. See client.js.
+    const pending = applyBucketsAction(wouldIds, wouldntIds, neutralIds);
     dragging = false;
+    pending.catch((err) => uiError.set(err.message));
   }
 </script>
 

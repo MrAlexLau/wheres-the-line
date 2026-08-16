@@ -298,12 +298,18 @@ function patchJudgingSlots(wouldIds, wouldntIds, neutralIds) {
   });
 }
 
-// Drag-and-drop writes go straight through (no busy/error gating — it's a
-// live interaction, not a discrete "submit" action) and refresh
-// immediately so the judge sees their own arrangement reflected.
+// Drag-and-drop should feel instant, not gated on a network round-trip —
+// only discrete "commit" actions (Confirm/Continue buttons, via
+// runRoomAction's busy-gating) are meant to wait on the server. Patching
+// the store is synchronous, so it's already applied by the time this
+// function's first `await` is reached — callers rely on that to unfreeze
+// their frozen render right after *calling* this (not after it resolves).
+// The actual write happens in the background; refresh() + a second patch
+// afterward reconcile in case that read was stale (see patchJudgingSlots'
+// comment) or the write itself failed differently than expected.
 export async function applyBucketsAction(wouldIds, wouldntIds, neutralIds) {
-  await engine.applyBuckets(wouldIds, wouldntIds, neutralIds);
   patchJudgingSlots(wouldIds, wouldntIds, neutralIds);
+  await engine.applyBuckets(wouldIds, wouldntIds, neutralIds);
   await refresh();
   patchJudgingSlots(wouldIds, wouldntIds, neutralIds);
 }
@@ -338,9 +344,11 @@ function patchJudgingOrder(orderedIds) {
   });
 }
 
+// Same "optimistic first, reconcile after" shape as applyBucketsAction —
+// see its comment.
 export async function applyOrderAction(orderedIds) {
-  await engine.applyOrder(orderedIds);
   patchJudgingOrder(orderedIds);
+  await engine.applyOrder(orderedIds);
   await refresh();
   patchJudgingOrder(orderedIds);
 }
