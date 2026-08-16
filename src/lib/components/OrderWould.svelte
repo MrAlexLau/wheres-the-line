@@ -40,7 +40,8 @@
   }}
 >
   <div class="bucket would-bucket">
-    <div class="bucket-header would-header">✅ Would do <span class="bucket-hint">(top = easy, bottom = your limit)</span></div>
+    <div class="bucket-header would-header">✅ Would do</div>
+    <div class="rank-label rank-label-top">Easiest</div>
     <div class="bucket-cards">
       {#each frozenWould as s, i (s.id)}
         <div class="order-row card-row" data-sort-key={`slot:${s.id}`}>
@@ -52,6 +53,7 @@
         </div>
       {/each}
     </div>
+    <div class="rank-label rank-label-bottom">Hardest</div>
   </div>
 </div>
 

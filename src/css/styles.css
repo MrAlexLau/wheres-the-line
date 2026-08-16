@@ -511,12 +511,17 @@ label {
   touch-action: auto;
 }
 
-.bucket-hint {
-  font-weight: 500;
-  text-transform: none;
-  letter-spacing: normal;
-  opacity: 0.85;
-  font-size: 0.72rem;
+.rank-label {
+  padding: 0.4rem 0.9rem 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.rank-label-bottom {
+  padding: 0 0.9rem 0.6rem;
 }
 
 .winner-badge {
