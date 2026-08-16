@@ -104,10 +104,13 @@ async function createRound(room, players, roundNumber, judgePlayer) {
   const condition = await drawCondition(room.id);
   const roundGoal = pickRoundGoal(nonJudge.length);
 
+  // Rounds open straight into SUBMITTING — there's no separate "pass to the
+  // judge" interstitial in multiplayer (everyone already has their own
+  // device), so a manual "start round" gate would just be an extra tap.
   const roundId = await api.create("rounds", {
     room_id: room.id,
     round_number: roundNumber,
-    phase: "ROUND_INTRO",
+    phase: "SUBMITTING",
     judge_player_id: judgePlayer.id,
     condition_card_text: condition,
     round_goal: roundGoal,
@@ -116,7 +119,7 @@ async function createRound(room, players, roundNumber, judgePlayer) {
     "submissions",
     nonJudge.map((p) => ({ round_id: roundId, player_id: p.id }))
   );
-  await api.update("rooms", room.id, { current_round_number: roundNumber, current_phase: "ROUND_INTRO" });
+  await api.update("rooms", room.id, { current_round_number: roundNumber, current_phase: "SUBMITTING" });
   return roundId;
 }
 
@@ -139,12 +142,6 @@ export async function startGame(room, players) {
   const judge = players[0];
   await createRound(room, players, 1, judge);
   await api.update("rooms", room.id, { status: "IN_PROGRESS" });
-}
-
-/** Judge-only: reveals the condition and opens submissions. */
-export async function startSubmissions(room, round) {
-  await api.update("rounds", round.id, { phase: "SUBMITTING" });
-  await api.update("rooms", room.id, { current_phase: "SUBMITTING" });
 }
 
 /** Player-only: plays one card from their hand. Returns the submitted_at timestamp actually written. */

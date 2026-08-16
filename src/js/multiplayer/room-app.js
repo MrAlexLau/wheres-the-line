@@ -505,9 +505,6 @@ function renderRound() {
 
   let view;
   switch (round.phase) {
-    case "ROUND_INTRO":
-      view = renderRoundIntro();
-      break;
     case "SUBMITTING":
       view = renderSubmitting();
       break;
@@ -548,39 +545,20 @@ function judgeName() {
   return state.players.find((p) => sameId(p.id, state.round.judge_player_id))?.display_name ?? "?";
 }
 
-function goalHeadline(goal) {
-  if (goal === "LEAST") return "Goal: Submit an action the judge WOULD NOT do";
-  if (goal === "BETWEEN") return "Goal: Submit an action the judge WOULD do, or WOULD NOT do";
-  return "Goal: Submit an action the judge WOULD do";
-}
-
-function renderRoundIntro() {
-  const screen = el("div", { class: "screen" });
-  screen.appendChild(scoreStrip());
-  screen.appendChild(el("h2", { text: `Judge: ${judgeName()}` }));
-  screen.appendChild(el("div", { class: "card condition" }, [document.createTextNode(state.round.condition_card_text)]));
-  screen.appendChild(el("div", { class: "criteria-callout" }, [el("p", { class: "criteria-main", text: goalHeadline(state.round.round_goal) })]));
-
-  if (sameId(me()?.id, state.round.judge_player_id)) {
-    screen.appendChild(
-      el("button", {
-        class: "btn-primary",
-        text: "Start submitting cards",
-        onclick: async () => {
-          await runRoomAction(() => engine.startSubmissions(state.room, state.round));
-        },
-      })
-    );
-  } else {
-    screen.appendChild(el("p", { class: "subtitle", text: "Waiting for the judge to start the round…" }));
-  }
-  return screen;
+function goalHeadline(goal, judgeName) {
+  if (goal === "LEAST") return `Goal: Submit an action that ${judgeName} WOULD NOT do`;
+  if (goal === "BETWEEN") return `Goal: Submit an action that ${judgeName} WOULD do, or WOULD NOT do`;
+  return `Goal: Submit an action that ${judgeName} WOULD do`;
 }
 
 function renderSubmitting() {
   const screen = el("div", { class: "screen" });
+  screen.appendChild(scoreStrip());
+  screen.appendChild(el("h2", { text: `Judge: ${judgeName()}` }));
   screen.appendChild(el("div", { class: "card condition" }, [document.createTextNode(state.round.condition_card_text)]));
-  screen.appendChild(el("div", { class: "criteria-callout" }, [el("p", { class: "criteria-main", text: goalHeadline(state.round.round_goal) })]));
+  screen.appendChild(
+    el("div", { class: "criteria-callout" }, [el("p", { class: "criteria-main", text: goalHeadline(state.round.round_goal, judgeName()) })])
+  );
 
   if (sameId(me()?.id, state.round.judge_player_id)) {
     screen.appendChild(el("p", { class: "subtitle", text: "You're judging this round — sit tight while everyone else submits." }));
