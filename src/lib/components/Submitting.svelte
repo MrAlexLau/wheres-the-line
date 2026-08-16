@@ -7,9 +7,9 @@
 
   $: mySubmission = $submissions.find((s) => sameId(s.player_id, $me?.id));
 
-  function pickCard(card) {
+  function pickCard(row) {
     if (!mySubmission) return;
-    submitCardAction(mySubmission.id, $me.id, card);
+    submitCardAction(mySubmission.id, $me.id, row.id, row.card_text);
   }
 </script>
 
@@ -30,8 +30,8 @@
         class="card action"
         role="button"
         tabindex="0"
-        on:click={() => pickCard(row.card_text)}
-        on:keydown={(e) => (e.key === "Enter" || e.key === " ") && pickCard(row.card_text)}
+        on:click={() => pickCard(row)}
+        on:keydown={(e) => (e.key === "Enter" || e.key === " ") && pickCard(row)}
       >
         {row.card_text}
       </div>

@@ -77,11 +77,16 @@ async function refresh() {
     round.set(freshRound ?? null);
 
     if (freshRound) {
-      const freshSubmissions = await api.read("submissions", { round_id: freshRound.id });
+      // Explicit limits well above the 8-player room cap (so at most 7
+      // non-judge submitters/slots), rather than trusting whatever the
+      // backend's default page size happens to be — a silent truncation
+      // here would make the client think fewer players exist than
+      // actually do.
+      const freshSubmissions = await api.read("submissions", { round_id: freshRound.id, limit: 20 });
       submissions.set(freshSubmissions);
 
       if (freshRound.phase === "JUDGING" || freshRound.phase === "REVEAL") {
-        judgingSlots.set(await api.read("judging_slots", { round_id: freshRound.id }));
+        judgingSlots.set(await api.read("judging_slots", { round_id: freshRound.id, limit: 20 }));
       }
 
       if (freshRound.phase === "SUBMITTING" && !sameId(freshRound.judge_player_id, playerId)) {
@@ -258,8 +263,8 @@ export async function startGameAction() {
   }
 }
 
-export function submitCardAction(submissionId, playerId, card) {
-  return runRoomAction(() => engine.submitCard(get(room), get(round).id, submissionId, playerId, card), {
+export function submitCardAction(submissionId, playerId, deckCardId, card) {
+  return runRoomAction(() => engine.submitCard(get(room), get(round).id, submissionId, playerId, deckCardId, card), {
     optimisticPatch: (submittedAt) => {
       submissions.update((list) =>
         list.map((s) => (sameId(s.id, submissionId) ? { ...s, card_text: card, submitted_at: s.submitted_at || submittedAt } : s))

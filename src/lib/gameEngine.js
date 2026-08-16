@@ -203,15 +203,30 @@ export async function startGame(room, players) {
   await api.update("rooms", room.id, { status: "IN_PROGRESS" });
 }
 
-/** Player-only: plays one card from their hand. Returns the submitted_at timestamp actually written. */
-export async function submitCard(room, roundId, submissionId, playerId, card) {
-  const [deckRow] = await api.read("deck_cards", { room_id: room.id, holder_player_id: playerId, card_text: card, status: "IN_HAND", limit: 1 });
-  if (!deckRow) throw new Error("That card isn't in your hand anymore.");
+/**
+ * Player-only: plays one card from their hand. Returns the submitted_at
+ * timestamp actually written. Identifies the card by its deck_cards row id
+ * (not by card text) — two identical card_text values would otherwise be
+ * ambiguous to a text-based lookup (`limit: 1` on a text match could pick
+ * either one). Not currently reachable (the shipped decks have no
+ * duplicate strings — see docs/SPEC.md §6), but matching by id removes the
+ * whole class of bug rather than relying on that staying true.
+ */
+export async function submitCard(room, roundId, submissionId, playerId, deckCardId, card) {
+  const deckRow = await api.readOne("deck_cards", deckCardId);
+  if (!deckRow || !sameId(deckRow.holder_player_id, playerId) || deckRow.status !== "IN_HAND") {
+    throw new Error("That card isn't in your hand anymore.");
+  }
   await api.update("deck_cards", deckRow.id, { status: "DISCARDED", holder_player_id: null });
   const submittedAt = ncbDatetime();
   await api.update("submissions", submissionId, { card_text: card, submitted_at: submittedAt });
 
-  const allSubmissions = await api.read("submissions", { round_id: roundId });
+  // Cap comfortably above the 8-player room limit (so at most 7 non-judge
+  // submitters) rather than trusting whatever the backend's default page
+  // size happens to be today — a silent truncation here would make this
+  // check think fewer players exist than actually do, which could either
+  // fire beginJudging early or never fire it at all.
+  const allSubmissions = await api.read("submissions", { round_id: roundId, limit: 20 });
   // The row we just wrote to `submissions` may not be reflected in this
   // read yet (no read-after-write guarantee), which would silently strand
   // everyone on the "waiting" screen forever. We know our own submission
@@ -225,6 +240,15 @@ export async function submitCard(room, roundId, submissionId, playerId, card) {
 }
 
 async function beginJudging(room, roundId, submissions) {
+  // Two submitters finishing at nearly the same moment (the last two
+  // players remaining, both tapping their card within the same couple of
+  // seconds — an entirely ordinary way for this to actually happen, not an
+  // exotic edge case) can both reach this function with an empty read here,
+  // since this check-then-act isn't atomic — nothing in this backend
+  // supports a real compare-and-swap. Both would then bulkCreate a full set
+  // of judging_slots, doubling every card in the judge's UI. Rather than
+  // trying to prevent the race (not possible without backend support),
+  // detect and clean up the duplicate afterward — see below.
   const existing = await api.read("judging_slots", { round_id: roundId, limit: 1 });
   if (existing.length > 0) return; // another device already opened judging
   const shuffled = shuffle(submissions);
@@ -234,6 +258,36 @@ async function beginJudging(room, roundId, submissions) {
   );
   await api.update("rounds", roundId, { phase: "JUDGING" });
   await api.update("rooms", room.id, { current_phase: "JUDGING" });
+  await dedupeJudgingSlots(roundId);
+}
+
+/**
+ * If two devices raced to create judging_slots for the same round (see
+ * beginJudging above), this leaves each submission with two slots instead
+ * of one. Keep the lowest-id slot per submission and delete the rest. A
+ * no-op in the overwhelmingly common case where there was no race.
+ *
+ * Both racing devices run this same cleanup concurrently (confirmed
+ * empirically, not just theorized), so two deletes can target the same
+ * already-gone row — the second one 404s. That's the desired end state
+ * arrived at twice, not a failure; swallow "not found" specifically and
+ * let any other error still surface.
+ */
+async function dedupeJudgingSlots(roundId) {
+  const slots = await api.read("judging_slots", { round_id: roundId, limit: 50 });
+  const seenBySubmission = new Map();
+  const extras = [];
+  for (const slot of slots.slice().sort((a, b) => a.id - b.id)) {
+    if (seenBySubmission.has(slot.submission_id)) extras.push(slot);
+    else seenBySubmission.set(slot.submission_id, slot);
+  }
+  await Promise.all(
+    extras.map((s) =>
+      api.remove("judging_slots", s.id).catch((err) => {
+        if (!/not found/i.test(err.message)) throw err;
+      })
+    )
+  );
 }
 
 /** Judge-only: persists a full bucket rearrangement from the drag-sort UI. */
