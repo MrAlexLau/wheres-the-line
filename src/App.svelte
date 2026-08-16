@@ -52,3 +52,5 @@
 {:else if $screen === "in-round"}
   <Round />
 {/if}
+
+<div class="version-tag">v{__APP_VERSION__}</div>

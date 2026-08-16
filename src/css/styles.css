@@ -585,3 +585,15 @@ footer.game-footer {
 .hidden {
   display: none !important;
 }
+
+.version-tag {
+  position: fixed;
+  right: 0.6rem;
+  bottom: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 3;
+}
