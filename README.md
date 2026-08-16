@@ -8,10 +8,13 @@ First to the target score wins.
 
 Full rules and design decisions: [`docs/SPEC.md`](docs/SPEC.md).
 
-This is a **static site** — plain HTML/CSS/JS with ES modules, no build
-step, no dependencies, no backend. Everything needed to play lives in the
-browser tab for the current game (v1 is pass-and-play only; see the spec's
-"Future: Multiplayer" section for what's planned next).
+This is a plain HTML/CSS/JS app with ES modules and no build step. It offers
+two ways to play:
+
+- **Multiplayer:** players join the same room from their own devices. Shared
+  game state is stored in NocodeBackend through a Netlify Function, so the
+  NocodeBackend secret never reaches the browser.
+- **Pass-and-play:** the original single-device mode at `/pass-and-play/`.
 
 ## Project structure
 
@@ -19,10 +22,13 @@ browser tab for the current game (v1 is pass-and-play only; see the spec's
 index.html              entry point
 package.json             npm scripts (dev server only — no build step)
 netlify.toml             Netlify build/redirect config
+netlify/functions/data.js secure proxy for NocodeBackend's Data API
 src/
   css/styles.css         all styling
   js/game.js              pure game logic/state machine (no DOM)
-  js/app.js               DOM rendering + event wiring
+  js/app.js               pass-and-play DOM rendering + event wiring
+  js/main.js              multiplayer entry point
+  js/multiplayer/         room UI, NocodeBackend client, and game engine
   data/cards.js            starter Condition/Action decks
 docs/
   SPEC.md                 full game & project spec
@@ -30,14 +36,15 @@ docs/
 
 ## Running locally
 
-There's still no build step — `npm install` only pulls in a tiny static
-file server (`http-server`) used for local dev, since opening `index.html`
-directly via `file://` fails (browsers block ES module imports from the
-filesystem).
+For pass-and-play, `npm run dev` starts a static server. Multiplayer needs
+the Netlify Function, so use `npm run dev:mp` after configuring the
+environment variables below.
 
 ```bash
 npm install
 npm run dev
+# Multiplayer:
+npm run dev:mp
 ```
 
 This serves the site at `http://localhost:8080` and opens it in your
@@ -51,10 +58,24 @@ python3 -m http.server 8000
 npx serve .
 ```
 
+### Configure NocodeBackend
+
+The database schema is included in [`schema.json`](schema.json). Import or
+apply it to your NocodeBackend instance, then configure these variables in
+Netlify (or in a local `.env` file for `netlify dev`):
+
+- `NCB_INSTANCE` — the NocodeBackend instance name (the checked-in schema
+  uses `56358_wheres_the_line`)
+- `NCB_DATA_API_URL` — normally `https://openapi.nocodebackend.com`
+- `NCB_SECRET_KEY` — the instance's server-side Data API key
+
+Use [`.env.example`](.env.example) as the non-secret template. The secret is
+only read by `netlify/functions/data.js`; do not add it to frontend code.
+
 ## Deploying to Netlify
 
 This repo is ready to deploy as-is — there's no build command, it just
-publishes the repository root.
+publishes the repository root and deploys the proxy function.
 
 ### Option A: Netlify CLI
 

@@ -2,9 +2,9 @@
 
 ## 1. Concept
 
-"Where's the Line" is a party game in the spirit of *Cards Against Humanity*,
-played pass-and-play on a single device (multiplayer is a planned future
-phase).
+"Where's the Line" is a party game in the spirit of *Cards Against Humanity*.
+It can be played pass-and-play on one device or multiplayer from separate
+devices in a shared room.
 
 Each round poses a **Condition** — a hypothetical scenario ("win a new car",
 "get out of a speeding ticket", "become mayor of your town"). Every
@@ -153,33 +153,21 @@ export const ACTIONS = ["drink a gallon of milk in an hour", "go 24 hours withou
   custom deck) reskins the whole game without touching game logic. This is
   intentionally the seam for a future "custom deck" / NSFW-toggle feature.
 
-## 7. Non-Goals for v1 (Pass & Play)
+## 7. Non-Goals
 
-- No accounts, no network play, no persistence across browser sessions
-  beyond the current tab's in-memory game state.
+- No accounts. A browser-local reconnect credential identifies a player in a
+  room, and shared state persists in NocodeBackend for the life of that room.
 - No card authoring UI.
 - No sound/animation polish beyond basic transitions.
 - No spectator mode.
 
-## 8. Future: Multiplayer (Phase 2, not built yet)
+## 8. Multiplayer
 
-Documented here so v1's architecture doesn't paint us into a corner:
-
-- Game state (players, hands, judge index, scores, deck position) should
-  live behind a single `Game` class/module with a serializable state object
-  and pure transition functions (`submitCard`, `judgePick`, `nextRound`,
-  etc.), decoupled from DOM rendering. This is what makes it portable to a
-  server-authoritative model later.
-- Planned approach: a small realtime backend (e.g. WebSocket relay or a
-  hosted realtime DB) so each player uses their own device/hand instead of
-  passing one device around; host device or server holds authoritative
-  state; Netlify would host only the static client, with the realtime
-  service hosted separately (Netlify Functions can proxy/auth but aren't a
-  great fit for long-lived WebSocket state).
-- Room codes for joining a game, reconnect handling, and a lobby screen are
-  the main new UI surfaces multiplayer will need.
-- None of this is implemented in v1; the only requirement on v1 is to keep
-  game logic separate from pass-and-play-specific UI so it can be reused.
+Multiplayer uses room codes, browser-local reconnect credentials, and a
+NocodeBackend Data API instance. The browser polls every two seconds for
+room changes. A Netlify Function injects the NocodeBackend API key, keeping
+it off clients. The host starts games and advances rounds; judges control
+their judging phases; each submitter plays their own card.
 
 ## 9. Tech Stack
 

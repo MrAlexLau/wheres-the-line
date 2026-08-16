@@ -40,13 +40,13 @@ export const ROUND_GOALS = {
   BETWEEN: "BETWEEN",
 };
 
-function pickRoundGoal(submitterCount) {
+export function pickRoundGoal(submitterCount) {
   const options = [ROUND_GOALS.MOST, ROUND_GOALS.LEAST];
   if (submitterCount >= 3) options.push(ROUND_GOALS.BETWEEN);
   return options[Math.floor(Math.random() * options.length)];
 }
 
-function shuffle(array) {
+export function shuffle(array) {
   const result = array.slice();
   for (let i = result.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
