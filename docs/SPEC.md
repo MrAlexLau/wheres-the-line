@@ -165,11 +165,42 @@ export const ACTIONS = ["drink a gallon of milk in an hour", "go 24 hours withou
 
 Multiplayer uses room codes, browser-local reconnect credentials, and a
 NocodeBackend Data API instance. The browser polls every two seconds for
-room changes. A Netlify Function injects the NocodeBackend API key, keeping
-it off clients. The host starts games and advances rounds; judges control
-their judging phases; each submitter plays their own card.
+room changes, but only redraws when stable, user-visible state changes. A
+Netlify Function injects the NocodeBackend API key, keeping it off clients.
+The host starts games and advances rounds; judges control their judging
+phases; each submitter plays their own card. The deployed NocodeBackend
+schema uses uppercase enum values (`LOBBY`, `IN_PROGRESS`, `ROUND_INTRO`,
+and so on), which the client preserves for reads and writes.
 
-## 9. Tech Stack
+Players can leave an active game from the in-game **Menu**. Leaving clears
+only that device's browser session and stops its polling; it does not delete
+the shared room or remove other players.
+
+All NocodeBackend datetime writes use `YYYY-MM-DD HH:mm:ss`, matching the
+database's MySQL datetime columns rather than JavaScript's ISO-8601 format.
+
+## 9. Implementation Status
+
+The multiplayer phase is implemented in the current app. The following
+operational items are part of the implementation:
+
+- Multiplayer home screen with host, join, lobby, round, judging, reveal,
+  and game-over views.
+- Netlify Function proxy with an allowlist for the six game tables; the
+  NocodeBackend secret remains server-side.
+- Browser-local reconnect sessions, stale-session recovery, and a leave-game
+  menu.
+- Polling that avoids full-screen animation flashes when no relevant state
+  changed.
+- NocodeBackend-compatible enum and datetime serialization.
+- Pass-and-play remains available at `/pass-and-play/`.
+
+When testing startup repeatedly, use a fresh room after a failed or
+interrupted start. A start that was interrupted after deck creation can leave
+partial game rows in the backend; room cleanup is intentionally not performed
+automatically because it could delete another player's active game.
+
+## 10. Tech Stack
 
 - Plain HTML + CSS + JavaScript (ES modules), no build step, no
   dependencies — keeps the Netlify deploy a pure static-file publish.

@@ -54,6 +54,44 @@ body {
   animation: none;
 }
 
+.game-menu {
+  align-self: flex-end;
+  position: relative;
+  z-index: 2;
+}
+
+.game-menu summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  list-style: none;
+  padding: 0.35rem 0.5rem;
+}
+
+.game-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.game-menu summary::after {
+  content: " ⋮";
+  color: var(--text);
+}
+
+.game-menu[open] {
+  background: var(--bg-elevated);
+  border: 1px solid #3a3a52;
+  border-radius: 12px;
+  padding: 0.15rem;
+}
+
+.menu-leave {
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.85rem;
+  padding: 0.55rem 0.7rem;
+  width: 100%;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;

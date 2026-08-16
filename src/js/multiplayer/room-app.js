@@ -408,21 +408,48 @@ function renderLobby() {
 
 function renderRound() {
   const round = state.round;
-  if (!round) return el("div", { class: "screen", text: "Setting up the round…" });
+  if (!round) return roundView(el("div", { class: "screen", text: "Setting up the round…" }));
   if (round.phase === "GAME_OVER" || state.room.status === "COMPLETE") return renderGameOver();
 
+  let view;
   switch (round.phase) {
     case "ROUND_INTRO":
-      return renderRoundIntro();
+      view = renderRoundIntro();
+      break;
     case "SUBMITTING":
-      return renderSubmitting();
+      view = renderSubmitting();
+      break;
     case "JUDGING":
-      return renderJudging();
+      view = renderJudging();
+      break;
     case "REVEAL":
-      return renderReveal();
+      view = renderReveal();
+      break;
     default:
-      return el("div", { class: "screen", text: "Unknown phase." });
+      view = el("div", { class: "screen", text: "Unknown phase." });
   }
+  return roundView(view);
+}
+
+function roundView(view) {
+  if (view.classList?.contains("screen")) view.prepend(gameMenu());
+  return view;
+}
+
+function gameMenu() {
+  return el("details", { class: "game-menu" }, [
+    el("summary", { text: "Menu" }),
+    el("button", {
+      class: "menu-leave",
+      type: "button",
+      text: "Leave game",
+      onclick: () => {
+        if (window.confirm("Leave this game on this device? The room will remain available to the other players.")) {
+          leaveRoom();
+        }
+      },
+    }),
+  ]);
 }
 
 function judgeName() {
