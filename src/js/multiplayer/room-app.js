@@ -60,7 +60,8 @@ function unmount() {
 
 async function refreshAndRender() {
   try {
-    await refresh();
+    const hasRoom = await refresh();
+    if (!hasRoom) return;
   } catch (err) {
     state.ui.error = err.message;
   }
@@ -70,6 +71,16 @@ async function refreshAndRender() {
 async function refresh() {
   const { roomId, playerId } = state.session;
   const [room, players] = await Promise.all([api.readOne("rooms", roomId), api.read("players", { room_id: roomId })]);
+  if (!room) {
+    // A stale localStorage reconnect credential (for example, after a room
+    // was deleted or only partially created) must not leave the UI trying to
+    // render a null room.
+    clearSession();
+    state.session = null;
+    unmount();
+    onExit();
+    return false;
+  }
   state.room = room;
   state.players = players;
 
@@ -94,6 +105,7 @@ async function refresh() {
   } else {
     state.screen = "lobby";
   }
+  return true;
 }
 
 function me() {
