@@ -15,6 +15,11 @@ let onExitCallback = null;
 // Per-round dedup guards for the self-heal checks in refresh() — see there.
 let healedSubmissionRounds = new Set();
 let healedHandRounds = new Set();
+// A submission row "missing" on a single poll is more often a lagging read
+// than an actually-missing row (see docs/SPEC.md §8b) — require it to look
+// missing on two consecutive polls (~2s apart) before self-healing, so a
+// single stale read can't trigger creating a real duplicate row.
+let suspectedMissingSubmissionRounds = new Set();
 
 /** Called once when entering the room app (host-setup/join/reconnect). */
 export function initRoomClient(initialScreen, exitCallback) {
@@ -25,6 +30,7 @@ export function initRoomClient(initialScreen, exitCallback) {
   session.set(existing);
   healedSubmissionRounds = new Set();
   healedHandRounds = new Set();
+  suspectedMissingSubmissionRounds = new Set();
 
   if (existing) refresh();
   stopPolling();
@@ -81,15 +87,20 @@ async function refresh() {
       if (freshRound.phase === "SUBMITTING" && !sameId(freshRound.judge_player_id, playerId)) {
         // Self-heal a missing submission row (e.g. the round-start
         // bulk-create silently dropped one record) — without it this
-        // player could never actually submit. Guarded to run once per
-        // round: only ever needs to *write* once, and re-checking a
-        // count-based condition every 2s risks reacting to a momentarily-
-        // inconsistent read rather than a real gap.
+        // player could never actually submit. Requires the row to look
+        // missing on two consecutive polls before acting (see
+        // suspectedMissingSubmissionRounds above), and even then
+        // ensureSubmissionRow does its own fresh targeted re-check before
+        // creating anything.
         let mySub = freshSubmissions.find((sub) => sameId(sub.player_id, playerId));
         if (!mySub && !healedSubmissionRounds.has(freshRound.id)) {
-          healedSubmissionRounds.add(freshRound.id);
-          mySub = await engine.ensureSubmissionRow(freshRound.id, playerId, freshSubmissions);
-          submissions.update((list) => [...list, mySub]);
+          if (!suspectedMissingSubmissionRounds.has(freshRound.id)) {
+            suspectedMissingSubmissionRounds.add(freshRound.id);
+          } else {
+            healedSubmissionRounds.add(freshRound.id);
+            mySub = await engine.ensureSubmissionRow(freshRound.id, playerId, freshSubmissions);
+            submissions.update((list) => [...list, mySub]);
+          }
         }
 
         let hand = await api.read("deck_cards", {

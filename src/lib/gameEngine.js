@@ -148,6 +148,16 @@ export async function dealUpToHandSize(roomId, playerId, handSize) {
 export async function ensureSubmissionRow(roundId, playerId, existingSubmissions) {
   const existing = existingSubmissions.find((s) => sameId(s.player_id, playerId));
   if (existing) return existing;
+  // The caller's existingSubmissions came from a list-read that may itself
+  // be lagging (see docs/SPEC.md §8b) — re-check with a fresh, narrowly
+  // scoped read before concluding the row is actually missing, rather than
+  // creating a duplicate. A duplicate here is worse than the thing this
+  // function exists to fix: it makes .find()-by-player-id ambiguous, which
+  // showed up as a player's screen staying stuck on their hand after they'd
+  // already submitted (the "wrong" duplicate row, still unsubmitted, kept
+  // winning the lookup).
+  const [reallyExisting] = await api.read("submissions", { round_id: roundId, player_id: playerId, limit: 1 });
+  if (reallyExisting) return reallyExisting;
   const id = await api.create("submissions", { round_id: roundId, player_id: playerId });
   return { id, round_id: roundId, player_id: playerId, submitted_at: null, card_text: null };
 }
