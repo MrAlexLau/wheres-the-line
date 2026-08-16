@@ -72,8 +72,16 @@ async function dealUpToHandSize(roomId, playerId, handSize) {
   }
 }
 
+// Row ids come back from two different code paths (create responses vs. read
+// payloads) that aren't guaranteed to agree on number-vs-string typing.
+// Comparing loosely (as strings) avoids judge/player matching silently
+// failing. Mirrors the same helper in room-app.js.
+function sameId(a, b) {
+  return a !== null && a !== undefined && b !== null && b !== undefined && String(a) === String(b);
+}
+
 async function createRound(room, players, roundNumber, judgePlayer) {
-  const nonJudge = players.filter((p) => p.id !== judgePlayer.id);
+  const nonJudge = players.filter((p) => !sameId(p.id, judgePlayer.id));
   const condition = await drawCondition(room.id);
   const roundGoal = pickRoundGoal(nonJudge.length);
 
@@ -120,8 +128,14 @@ export async function submitCard(room, roundId, submissionId, playerId, card) {
   await api.update("submissions", submissionId, { card_text: card, submitted_at: ncbDatetime() });
 
   const allSubmissions = await api.read("submissions", { round_id: roundId });
-  if (allSubmissions.every((s) => s.submitted_at)) {
-    await beginJudging(room, roundId, allSubmissions);
+  // The row we just wrote to `submissions` may not be reflected in this
+  // read yet (no read-after-write guarantee), which would silently strand
+  // everyone on the "waiting" screen forever. We know our own submission
+  // went through, so treat it as submitted regardless of what this read
+  // says.
+  const withOwnWrite = allSubmissions.map((s) => (sameId(s.id, submissionId) ? { ...s, submitted_at: s.submitted_at || ncbDatetime() } : s));
+  if (withOwnWrite.every((s) => s.submitted_at)) {
+    await beginJudging(room, roundId, withOwnWrite);
   }
 }
 
@@ -168,7 +182,7 @@ export async function confirmJudging(room, round, submissions, judgingSlots, pla
     const scored = scorerSubmissionIds.includes(s.id);
     writes.push(api.update("submissions", s.id, { round_score_delta: scored ? 1 : 0 }));
     if (scored) {
-      const player = players.find((p) => p.id === s.player_id);
+      const player = players.find((p) => sameId(p.id, s.player_id));
       writes.push(api.update("players", player.id, { score: player.score + 1 }));
     }
   }
@@ -192,7 +206,7 @@ export async function nextRound(room, round, players) {
     return;
   }
   const orderedByJoin = players.slice().sort((a, b) => a.join_order - b.join_order);
-  const currentJudgeIdx = orderedByJoin.findIndex((p) => p.id === round.judge_player_id);
+  const currentJudgeIdx = orderedByJoin.findIndex((p) => sameId(p.id, round.judge_player_id));
   const nextJudge = orderedByJoin[(currentJudgeIdx + 1) % orderedByJoin.length];
   await createRound(room, players, room.current_round_number + 1, nextJudge);
 }

@@ -63,6 +63,7 @@ async function refreshAndRender() {
   try {
     const hasRoom = await refresh();
     if (!hasRoom) return;
+    state.ui.error = "";
   } catch (err) {
     state.ui.error = err.message;
   }
@@ -90,14 +91,24 @@ async function refresh() {
 
   if (room.status === "IN_PROGRESS" || room.status === "COMPLETE") {
     state.screen = "in-round";
-    const [round] = await api.read("rounds", { room_id: roomId, round_number: room.current_round_number, limit: 1 });
+    // sort/order pins this to the single current round deterministically —
+    // without it, a backend with no default ordering could hand back a
+    // different matching row on each poll, which looked like constant
+    // flashing and, worse, briefly showed a stale round's data.
+    const [round] = await api.read("rounds", {
+      room_id: roomId,
+      round_number: room.current_round_number,
+      sort: "id",
+      order: "desc",
+      limit: 1,
+    });
     state.round = round;
     if (round) {
       state.submissions = await api.read("submissions", { round_id: round.id });
       if (round.phase === "JUDGING" || round.phase === "REVEAL") {
         state.judgingSlots = await api.read("judging_slots", { round_id: round.id });
       }
-      if (round.phase === "SUBMITTING" && round.judge_player_id !== playerId) {
+      if (round.phase === "SUBMITTING" && !sameId(round.judge_player_id, playerId)) {
         state.myHand = await api.read("deck_cards", {
           room_id: roomId,
           deck_type: "ACTION",
@@ -112,8 +123,16 @@ async function refresh() {
   return true;
 }
 
+// Row ids come back from two different code paths — api.create()'s response
+// body and api.read()'s row payloads — which aren't guaranteed to agree on
+// number-vs-string typing. Comparing loosely (as strings) avoids "who am I"
+// checks silently failing and misidentifying the current player.
+function sameId(a, b) {
+  return a !== null && a !== undefined && b !== null && b !== undefined && String(a) === String(b);
+}
+
 function me() {
-  return state.players.find((p) => p.id === state.session?.playerId) || null;
+  return state.players.find((p) => sameId(p.id, state.session?.playerId)) || null;
 }
 
 // ---------- actions ----------
@@ -453,7 +472,7 @@ function gameMenu() {
 }
 
 function judgeName() {
-  return state.players.find((p) => p.id === state.round.judge_player_id)?.display_name ?? "?";
+  return state.players.find((p) => sameId(p.id, state.round.judge_player_id))?.display_name ?? "?";
 }
 
 function goalHeadline(goal) {
@@ -469,7 +488,7 @@ function renderRoundIntro() {
   screen.appendChild(el("div", { class: "card condition" }, [document.createTextNode(state.round.condition_card_text)]));
   screen.appendChild(el("div", { class: "criteria-callout" }, [el("p", { class: "criteria-main", text: goalHeadline(state.round.round_goal) })]));
 
-  if (me()?.id === state.round.judge_player_id) {
+  if (sameId(me()?.id, state.round.judge_player_id)) {
     screen.appendChild(
       el("button", {
         class: "btn-primary",
@@ -490,12 +509,12 @@ function renderSubmitting() {
   screen.appendChild(el("div", { class: "card condition" }, [document.createTextNode(state.round.condition_card_text)]));
   screen.appendChild(el("div", { class: "criteria-callout" }, [el("p", { class: "criteria-main", text: goalHeadline(state.round.round_goal) })]));
 
-  if (me()?.id === state.round.judge_player_id) {
+  if (sameId(me()?.id, state.round.judge_player_id)) {
     screen.appendChild(el("p", { class: "subtitle", text: "You're judging this round — sit tight while everyone else submits." }));
     return screen;
   }
 
-  const mySubmission = state.submissions.find((s) => s.player_id === me()?.id);
+  const mySubmission = state.submissions.find((s) => sameId(s.player_id, me()?.id));
   if (mySubmission?.submitted_at) {
     screen.appendChild(el("p", { class: "subtitle", text: "Card submitted! Waiting on the others…" }));
     return screen;
@@ -509,6 +528,7 @@ function renderSubmitting() {
         class: "card action",
         text: row.card_text,
         onclick: async () => {
+          if (!mySubmission) return;
           await runRoomAction(() => engine.submitCard(state.room, state.round.id, mySubmission.id, me().id, row.card_text));
         },
       })
@@ -523,7 +543,7 @@ function renderJudging() {
   const screen = el("div", { class: "screen" });
   screen.appendChild(el("div", { class: "card condition" }, [document.createTextNode(state.round.condition_card_text)]));
 
-  if (me()?.id !== state.round.judge_player_id) {
+  if (!sameId(me()?.id, state.round.judge_player_id)) {
     screen.appendChild(el("p", { class: "subtitle", text: `${judgeName()} is deciding where the line is…` }));
     return screen;
   }
@@ -651,7 +671,7 @@ function renderReveal() {
 
   const list = el("div", { class: "submission-list" });
   for (const s of state.submissions) {
-    const player = state.players.find((p) => p.id === s.player_id);
+    const player = state.players.find((p) => sameId(p.id, s.player_id));
     const scored = (s.round_score_delta || 0) > 0;
     const row = el("div", { class: `reveal-row${scored ? " winner" : ""}` });
     row.appendChild(el("span", { class: "player-name", text: player?.display_name ?? "?" }));
