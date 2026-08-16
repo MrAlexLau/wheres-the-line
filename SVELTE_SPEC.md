@@ -1,7 +1,26 @@
 # Svelte Rewrite Plan — Multiplayer Client
 
-Status: **planning only** — nothing in this doc is implemented yet. Repo
-state before this work begins is tagged `pre-svelte`.
+Status: **implemented**. Repo state before this work began is tagged
+`pre-svelte`. The plan below is kept as-written for the record; see
+`docs/SPEC.md` §9/§10 for the current, living description of the shipped
+architecture. Notable deviations from the plan as originally written:
+
+- The migration was done as one pass rather than phased/incremental,
+  including the old vanilla `room-app.js`/`host-engine.js` being removed
+  immediately rather than kept alongside during a transition period.
+- End-to-end validation used a Node script driving the real
+  `gameEngine.js`/`api.js` modules against the live NocodeBackend instance
+  (no headless browser was available in the build environment), not a
+  manual multi-device playtest. It caught a real, previously-undiscovered
+  bug — see docs/SPEC.md §8b's expanded "read-after-write" entry — that a
+  manual playtest might easily have missed (it required inspecting which
+  specific database rows ended up in which state, not just how the UI
+  looked). A manual playtest is still worth doing before calling this done.
+- `dealUpToHandSize`/`ensureSubmissionRow` self-heal helpers moved from
+  `host-engine.js` to `gameEngine.js` under the same names; a new
+  `dealToMany()` was added there that §5/§9's plan didn't anticipate — see
+  its docstring and docs/SPEC.md §8b for why looping the single-player
+  version was itself a bug, not just a naming/location change.
 
 ## 1. Why
 

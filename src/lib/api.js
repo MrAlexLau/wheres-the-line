@@ -1,6 +1,6 @@
 // Thin client for the /api/data/* proxy (netlify/functions/data.js), which
 // forwards to nocodebackend's Data API. No game rules here — see
-// docs/SPEC.md §8 and host-engine.js for where those live.
+// docs/SPEC.md §8 and gameEngine.js for where those live.
 
 const BASE = "/api/data";
 const METHOD = { read: "GET", create: "POST", update: "PUT", delete: "DELETE" };

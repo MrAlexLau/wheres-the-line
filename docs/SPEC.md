@@ -270,12 +270,23 @@ assumptions — code that reads/writes these tables should account for them:
 - **Id type stability**: `POST /create` responses type `id` as an integer,
   but list/read responses aren't guaranteed to serialize every integer
   column the same way on every call. Client code should compare ids loosely
-  (string-coerced) rather than with `===` — see `sameId()` in
-  `room-app.js` / `host-engine.js`.
+  (string-coerced) rather than with `===` — see `sameId()` in `src/lib/ids.js`.
 - **Read-after-write**: a row you just wrote isn't guaranteed to reflect in
-  the very next read of that table (see `submitCard`'s "did everyone
-  submit?" check in `host-engine.js`, which patches in its own known write
-  before evaluating).
+  the very next read of that table — and this isn't limited to reading back
+  your own write. Confirmed empirically: dealing cards to multiple players
+  in a sequential per-player loop (read the draw pile → assign N cards →
+  move to the next player) let a later player's "what's still in the draw
+  pile" read miss an *earlier* player's just-completed assignment, causing
+  the later player to re-draw and steal the earlier player's exact cards —
+  the actual root cause of a "one player ends up with zero cards" bug that
+  looked, from the outside, like a dealing logic error. Fixed by
+  `dealToMany()` in `src/lib/gameEngine.js`, which reads the shared draw
+  pile exactly once and partitions it among players in memory instead of
+  re-reading it once per player. The same lag also affects reading back a
+  bucket rearrangement immediately after writing it (see `submitCard`'s
+  "did everyone submit?" check and `applyBucketsAction`'s store patch in
+  `src/lib/client.js`, both of which patch in the known-true write rather
+  than trusting the very next read).
 - **Bulk-create partial failure**: `bulk/create` can return HTTP 207 for a
   partially-successful batch; the client currently treats 207 the same as a
   full success (see `api.bulkCreate`). Round-start self-heals
@@ -284,8 +295,10 @@ assumptions — code that reads/writes these tables should account for them:
 
 ## 9. Implementation Status
 
-The multiplayer phase is implemented in the current app. The following
-operational items are part of the implementation:
+The multiplayer phase is implemented in the current app, as a Svelte
+client (see §10 and `SVELTE_SPEC.md` for the rationale and migration plan —
+that doc's plan is now implemented). The following operational items are
+part of the implementation:
 
 - Multiplayer home screen with host, join, lobby, round, judging, reveal,
   and game-over views.
@@ -293,10 +306,13 @@ operational items are part of the implementation:
   NocodeBackend secret remains server-side.
 - Browser-local reconnect sessions, stale-session recovery, and a leave-game
   menu.
-- Polling that avoids full-screen animation flashes when no relevant state
-  changed.
+- Svelte stores for shared state — polling just calls `.set()` on the
+  relevant stores every 2s; Svelte's own reactivity decides what actually
+  needs to repaint, so there's no more hand-rolled "did anything actually
+  change" diffing in the client.
 - NocodeBackend-compatible enum and datetime serialization.
-- Pass-and-play remains available at `/pass-and-play/`.
+- Pass-and-play remains available at `/pass-and-play/`, untouched by the
+  Svelte rewrite (see §10).
 
 When testing startup repeatedly, use a fresh room after a failed or
 interrupted start. A start that was interrupted after deck creation can leave
@@ -305,12 +321,42 @@ automatically because it could delete another player's active game.
 
 ## 10. Tech Stack
 
-- Plain HTML + CSS + JavaScript (ES modules), no build step, no
-  dependencies — keeps the Netlify deploy a pure static-file publish.
-- `src/js/game.js` — framework-free game/state logic (the reusable core
-  described in §8).
-- `src/js/app.js` — DOM rendering and event wiring for the pass-and-play UI.
-- `src/data/cards.js` — the starter Condition/Action decks.
-- `src/css/styles.css` — styling.
+- **Multiplayer client** (`src/App.svelte`, `src/lib/`): Svelte + Vite.
+  Chosen specifically to eliminate a whole class of bug this project hit
+  repeatedly under the original hand-rolled vanilla-JS renderer — a
+  snapshot-diff gate deciding whether to tear down and rebuild the entire
+  screen on every poll, which was fragile to backend field-serialization
+  quirks and caused visible flashing. Svelte's compiled reactivity only
+  touches the DOM nodes tied to a value that actually changed, so polling
+  can update stores freely without that gate. See `SVELTE_SPEC.md` for the
+  full rationale and design.
+  - `src/lib/api.js` — thin client for the `/api/data/*` proxy.
+  - `src/lib/session.js` — browser-local reconnect credentials.
+  - `src/lib/ids.js` — `sameId()`, the loose id-comparison helper needed by
+    the id-type-stability quirk in §8b.
+  - `src/lib/gameEngine.js` — round-orchestration rules (mirrors
+    `src/js/game.js`'s rules but operates on NocodeBackend rows).
+  - `src/lib/stores.js` — the shared reactive state.
+  - `src/lib/client.js` — the poll loop and all write actions.
+  - `src/lib/dragSort.js` — the judge's Pointer-Events drag-to-sort UI,
+    ported as a Svelte action.
+  - `src/lib/components/` — one component per screen.
+- **Pass-and-play** (`src/js/app.js`, `src/js/game.js`,
+  `pass-and-play/index.html`): plain HTML + CSS + JavaScript (ES modules),
+  no build step, no dependencies — deliberately kept outside the Svelte
+  build (see `SVELTE_SPEC.md` §2). `src/js/game.js` is the framework-free
+  game/state logic; `src/js/app.js` is the DOM rendering/event wiring.
+  Copied verbatim into the production build by `vite-plugin-static-copy`
+  (configured in `vite.config.js`) so their existing relative
+  `<script>`/`<link>` references keep working unmodified.
+- `src/data/cards.js` — the starter Condition/Action decks, shared by both
+  the pass-and-play app and the multiplayer game engine.
+- `src/css/styles.css` — styling, shared by both apps (bundled for the
+  Svelte app, copied verbatim for pass-and-play).
+- The project is no longer a zero-build static-file publish: `npm run
+  build` (`vite build`) runs during Netlify's build step and produces
+  `dist/`, which is what actually gets published. `npm run dev` (`vite`)
+  serves everything, including pass-and-play, directly from source with no
+  build step needed for local development.
 - Target: modern evergreen browsers (mobile Safari/Chrome included, since
-  pass-and-play is primarily played on phones/tablets).
+  this game is primarily played on phones/tablets).

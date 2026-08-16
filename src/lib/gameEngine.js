@@ -8,11 +8,15 @@
 // actually played (everyone has their own device, not one pass-and-play
 // screen) while keeping the same "no server-side rule enforcement" posture
 // — nothing here runs on the backend, it's all client logic that happens to
-// write shared rows. See docs/SPEC.md §8 and the plan file for context.
+// write shared rows. See docs/SPEC.md §8 and SVELTE_SPEC.md for context.
+//
+// Framework-agnostic on purpose (no Svelte imports) — client.js is the only
+// thing that wires this into stores.
 
 import { api } from "./api.js";
-import { CONDITIONS, ACTIONS } from "../../data/cards.js";
-import { pickRoundGoal, shuffle } from "../game.js";
+import { CONDITIONS, ACTIONS } from "../data/cards.js";
+import { pickRoundGoal, shuffle } from "../js/game.js";
+import { sameId } from "./ids.js";
 
 async function materializeDecks(roomId) {
   const conditionRecords = shuffle(CONDITIONS).map((card_text, i) => ({
@@ -51,10 +55,67 @@ async function drawCondition(roomId) {
 }
 
 /**
- * Exported so a player's own device can self-heal a short hand — e.g. if a
- * dealt card never landed (a partial bulk-create, or a late joiner who
- * missed the initial deal at game start). A no-op if they already have
- * enough cards.
+ * Deals up to handSize cards to *multiple* players in one pass. Prefer this
+ * over calling dealUpToHandSize once per player in a loop: each call to
+ * dealUpToHandSize re-reads "what's still IN_DRAW_PILE," and that read is
+ * not guaranteed to reflect another call's just-completed write (confirmed
+ * empirically — see SVELTE_SPEC.md / docs/SPEC.md §8b "no read-after-write
+ * guarantee," which turned out to apply across *different* writes too, not
+ * just your own). Looping dealUpToHandSize sequentially over players let a
+ * later player's read miss an earlier player's card assignment and
+ * re-deal/steal those exact cards — the actual root cause of the "one
+ * player ends up with zero cards" bug. This version reads the shared draw
+ * pile exactly once, partitions it among players in memory, and writes each
+ * card to its final holder directly, so there's no cross-player read to
+ * race against.
+ */
+export async function dealToMany(roomId, players, handSize) {
+  const heldCounts = await Promise.all(
+    players.map((p) =>
+      api
+        .read("deck_cards", { room_id: roomId, deck_type: "ACTION", status: "IN_HAND", holder_player_id: p.id, limit: 500 })
+        .then((h) => h.length)
+    )
+  );
+  const needs = players.map((_, i) => Math.max(0, handSize - heldCounts[i]));
+  let totalNeed = needs.reduce((a, b) => a + b, 0);
+  if (totalNeed === 0) return;
+
+  let drawable = [];
+  while (drawable.length < totalNeed) {
+    const batch = await api.read("deck_cards", {
+      room_id: roomId,
+      deck_type: "ACTION",
+      status: "IN_DRAW_PILE",
+      sort: "draw_order",
+      order: "asc",
+      limit: totalNeed - drawable.length,
+    });
+    if (batch.length === 0) {
+      await reshuffleIfNeeded(roomId, "ACTION");
+      continue;
+    }
+    drawable = drawable.concat(batch);
+  }
+
+  const writes = [];
+  let cursor = 0;
+  players.forEach((p, i) => {
+    const slice = drawable.slice(cursor, cursor + needs[i]);
+    cursor += needs[i];
+    for (const card of slice) {
+      writes.push(api.update("deck_cards", card.id, { status: "IN_HAND", holder_player_id: p.id }));
+    }
+  });
+  await Promise.all(writes);
+}
+
+/**
+ * Single-player top-up. Safe for the self-heal path (an isolated player
+ * catching themselves up mid-round, not part of a tight multi-player dealing
+ * loop) but prefer dealToMany() whenever dealing to more than one player at
+ * once — see its comment for why looping this one is the actual bug that
+ * caused "a player ends up with zero cards."
  */
 export async function dealUpToHandSize(roomId, playerId, handSize) {
   const held = await api.read("deck_cards", { room_id: roomId, deck_type: "ACTION", status: "IN_HAND", holder_player_id: playerId, limit: 500 });
@@ -76,14 +137,6 @@ export async function dealUpToHandSize(roomId, playerId, handSize) {
     await Promise.all(drawable.map((row) => api.update("deck_cards", row.id, { status: "IN_HAND", holder_player_id: playerId })));
     need -= drawable.length;
   }
-}
-
-// Row ids come back from two different code paths (create responses vs. read
-// payloads) that aren't guaranteed to agree on number-vs-string typing.
-// Comparing loosely (as strings) avoids judge/player matching silently
-// failing. Mirrors the same helper in room-app.js.
-function sameId(a, b) {
-  return a !== null && a !== undefined && b !== null && b !== undefined && String(a) === String(b);
 }
 
 /**
@@ -134,11 +187,7 @@ export async function startGame(room, players) {
   players = freshPlayers.length >= players.length ? freshPlayers : players;
 
   await materializeDecks(room.id);
-  // Deal in order: concurrent reads of the draw pile could otherwise give
-  // multiple players the same card before either update reaches the API.
-  for (const player of players) {
-    await dealUpToHandSize(room.id, player.id, room.hand_size);
-  }
+  await dealToMany(room.id, players, room.hand_size);
   const judge = players[0];
   await createRound(room, players, 1, judge);
   await api.update("rooms", room.id, { status: "IN_PROGRESS" });
@@ -214,10 +263,8 @@ export async function confirmJudging(room, round, submissions, judgingSlots, pla
   }
   await Promise.all(writes);
 
-  // Same constraint as the initial deal: reserve cards one player at a time.
-  for (const submission of submissions) {
-    await dealUpToHandSize(room.id, submission.player_id, room.hand_size);
-  }
+  const submitters = submissions.map((s) => players.find((p) => sameId(p.id, s.player_id))).filter(Boolean);
+  await dealToMany(room.id, submitters, room.hand_size);
 
   await api.update("rounds", round.id, { phase: "REVEAL", confirmed_at: ncbDatetime() });
   await api.update("rooms", room.id, { current_phase: "REVEAL" });
