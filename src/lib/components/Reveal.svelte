@@ -16,7 +16,7 @@
       <span class="player-name">{player?.display_name ?? "?"}</span>
       {s.card_text || ""}
       {#if scored}
-        <span class="pick-tag most">🏆 Least likely yes (+1)</span>
+        <span class="pick-tag most">🏆 Best dare (+1)</span>
       {/if}
     </div>
   {/each}
