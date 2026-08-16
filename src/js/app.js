@@ -1,31 +1,27 @@
 import { Game, PHASES, ROUND_GOALS } from "./game.js";
 import { CONDITIONS, ACTIONS } from "../data/cards.js";
 
-const GOAL_TITLE = {
-  [ROUND_GOALS.MOST]: "Goal: Find the MOST",
-  [ROUND_GOALS.LEAST]: "Goal: Find the LEAST",
-  [ROUND_GOALS.BETWEEN]: "Goal: Draw the line",
-};
-
-/** What card to look for, given the round's goal — the answer to "what should I play?" */
-function submissionCriteria(goal, judgeName) {
-  switch (goal) {
-    case ROUND_GOALS.MOST:
-      return `Play the MOST extreme thing you think ${judgeName} would actually agree to do. Too tame and it lands on the "wouldn't do" side — you'll lose a point instead.`;
-    case ROUND_GOALS.LEAST:
-      return `Play something you think ${judgeName} would refuse to do — the LEAST they'd do. Too tame and it lands on the "would do" side — you'll lose a point instead.`;
-    case ROUND_GOALS.BETWEEN:
-    default:
-      return `Play something you think ${judgeName} would either happily do, or flat-out refuse — go for an extreme. No penalty for missing this round.`;
+/** "Goal: Submit an action the judge WOULD(NOT) do", with WOULD/WOULD NOT underlined. */
+function goalHeadlineNodes(goal) {
+  const nodes = [document.createTextNode("Goal: Submit an action the judge ")];
+  if (goal === ROUND_GOALS.LEAST) {
+    nodes.push(el("u", { text: "WOULD NOT" }), document.createTextNode(" do"));
+  } else if (goal === ROUND_GOALS.BETWEEN) {
+    nodes.push(
+      el("u", { text: "WOULD" }),
+      document.createTextNode(" do, or "),
+      el("u", { text: "WOULD NOT" }),
+      document.createTextNode(" do")
+    );
+  } else {
+    nodes.push(el("u", { text: "WOULD" }), document.createTextNode(" do"));
   }
+  return nodes;
 }
 
 /** A big, hard-to-miss callout answering "what card should I play?" */
-function renderCriteriaCallout(goal, judgeName) {
-  return el("div", { class: "criteria-callout" }, [
-    el("span", { class: "criteria-label", text: GOAL_TITLE[goal] }),
-    el("p", { class: "criteria-main", text: submissionCriteria(goal, judgeName) }),
-  ]);
+function renderCriteriaCallout(goal) {
+  return el("div", { class: "criteria-callout" }, [el("p", { class: "criteria-main" }, goalHeadlineNodes(goal))]);
 }
 
 const root = document.getElementById("app");
@@ -300,7 +296,7 @@ function renderConditionReveal() {
       document.createTextNode(game.condition),
     ])
   );
-  screen.appendChild(renderCriteriaCallout(game.roundGoal, game.judge.name));
+  screen.appendChild(renderCriteriaCallout(game.roundGoal));
   screen.appendChild(
     el("button", {
       class: "btn-primary",
@@ -327,7 +323,7 @@ function renderSubmitting() {
   const screen = el("div", { class: "screen" });
   screen.appendChild(el("p", { class: "subtitle", text: `${player.name}, pick your card for:` }));
   screen.appendChild(el("div", { class: "card condition" }, [document.createTextNode(game.condition)]));
-  screen.appendChild(renderCriteriaCallout(game.roundGoal, game.judge.name));
+  screen.appendChild(renderCriteriaCallout(game.roundGoal));
   screen.appendChild(el("h3", { text: "Your hand" }));
 
   const grid = el("div", { class: "hand-grid" });
@@ -360,7 +356,7 @@ function renderJudging() {
   screen.appendChild(
     el("p", {
       class: "subtitle",
-      text: "Drag each card into the bucket where it belongs. Within a bucket, drag to reorder — the card closest to the divide in each bucket is the one that counts.",
+      text: "Drag every card out of the middle pile into a bucket. Within a bucket, order matters — the card closest to the middle is the one that counts.",
     })
   );
 
@@ -372,41 +368,37 @@ function renderJudging() {
     wouldCards,
   ]);
 
+  const neutralCards = el("div", { class: "bucket-cards", "data-bucket": "neutral" });
+  const neutralBucket = el("div", { class: "bucket neutral-bucket" }, [
+    el("div", { class: "bucket-header neutral-header", text: "🤔 Not sorted yet" }),
+    neutralCards,
+  ]);
+
   const wouldntCards = el("div", { class: "bucket-cards", "data-bucket": "wouldnt" });
   const wouldntBucket = el("div", { class: "bucket wouldnt-bucket" }, [
     el("div", { class: "bucket-header wouldnt-header", text: "🚫 Wouldn't do" }),
     wouldntCards,
   ]);
 
-  const ordered = game.orderedSubmissions();
-  ordered.forEach(({ playerId, card }, index) => {
-    const target = index < game.linePosition ? wouldCards : wouldntCards;
-    target.appendChild(renderJudgeCardRow(playerId, card));
-  });
+  game.wouldIds.forEach((id) => wouldCards.appendChild(renderJudgeCardRow(id, game.cardFor(id))));
+  game.neutralIds.forEach((id) => neutralCards.appendChild(renderJudgeCardRow(id, game.cardFor(id))));
+  game.wouldntIds.forEach((id) => wouldntCards.appendChild(renderJudgeCardRow(id, game.cardFor(id))));
 
   container.appendChild(wouldBucket);
+  container.appendChild(neutralBucket);
   container.appendChild(wouldntBucket);
   screen.appendChild(container);
 
-  initBucketDragSort(wouldCards, wouldntCards, (wouldIds, wouldntIds) => {
-    game.applyOrder([...wouldIds, ...wouldntIds], wouldIds.length);
+  initBucketDragSort([wouldCards, neutralCards, wouldntCards], (wouldIds, neutralIds, wouldntIds) => {
+    game.applyBuckets(wouldIds, wouldntIds, neutralIds);
     render();
   });
 
-  const outcome = game.pendingOutcome();
-  const scorerNames = outcome.scorers.map((id) => game.players.find((p) => p.id === id).name);
-  const loserNames = outcome.losers.map((id) => game.players.find((p) => p.id === id).name);
-  screen.appendChild(
-    el("p", {
-      class: "subtitle",
-      text: scorerNames.length > 0 ? `Would score right now: ${scorerNames.join(", ")}` : "No one would score right now.",
-    })
-  );
-  if (loserNames.length > 0) {
+  if (game.neutralIds.length > 0) {
     screen.appendChild(
       el("p", {
-        class: "subtitle penalty-preview",
-        text: `Would lose a point right now: ${loserNames.join(", ")}`,
+        class: "subtitle",
+        text: `${game.neutralIds.length} card${game.neutralIds.length === 1 ? "" : "s"} still need${game.neutralIds.length === 1 ? "s" : ""} to be sorted.`,
       })
     );
   }
@@ -414,7 +406,7 @@ function renderJudging() {
   screen.appendChild(
     el("button", {
       class: "btn-primary",
-      text: "Confirm the line",
+      text: "Confirm",
       disabled: !game.canConfirmJudging(),
       onclick: () => {
         game.confirmJudging();
@@ -433,17 +425,17 @@ function renderJudgeCardRow(playerId, card) {
 }
 
 /**
- * Enables pointer-based drag-to-sort between two bucket containers
- * (`wouldContainer`, `wouldntContainer`), each holding rows with a unique
+ * Enables pointer-based drag-to-sort across an ordered list of bucket
+ * `containers`, each holding rows with a unique
  * `data-sort-key="card:<playerId>"`. Works uniformly for mouse, touch, and
  * pen via Pointer Events. A card can be dragged to reorder within its
- * bucket or dropped into the other bucket entirely — including into an
- * empty one. Calls `onDrop(wouldIds, wouldntIds)` once a drag ends, derived
- * from the final DOM order of each bucket.
+ * bucket or dropped into any other bucket entirely — including an empty
+ * one. Calls `onDrop(...idsPerContainer)` once a drag ends — one array per
+ * container, in the same order as `containers` — derived from the final DOM
+ * order of each.
  */
-function initBucketDragSort(wouldContainer, wouldntContainer, onDrop) {
-  const containers = [wouldContainer, wouldntContainer];
-  const wrapper = wouldContainer.closest(".judge-order");
+function initBucketDragSort(containers, onDrop) {
+  const wrapper = containers[0].closest(".judge-order");
 
   wrapper.addEventListener("pointerdown", (e) => {
     const row = e.target.closest("[data-sort-key]");
@@ -513,7 +505,7 @@ function initBucketDragSort(wouldContainer, wouldntContainer, onDrop) {
           el.getAttribute("data-sort-key").slice("card:".length)
         );
 
-      onDrop(idsFrom(wouldContainer), idsFrom(wouldntContainer));
+      onDrop(...containers.map(idsFrom));
     };
 
     window.addEventListener("pointermove", onMove);
@@ -535,22 +527,15 @@ function renderReveal() {
     const isMost = game.mostPick === playerId;
     const isLeast = game.leastPick === playerId;
     const scored = game.winners.includes(playerId);
-    const lost = game.losers.includes(playerId);
-    const row = el("div", { class: `reveal-row${scored ? " winner" : ""}${lost ? " loser" : ""}` });
+    const row = el("div", { class: `reveal-row${scored ? " winner" : ""}` });
     if (isMost) {
       row.appendChild(
-        el("span", {
-          class: `pick-tag most${scored ? "" : lost ? " penalty" : " unscored"}`,
-          text: scored ? "MOST (+1)" : lost ? "MOST (-1)" : "MOST",
-        })
+        el("span", { class: `pick-tag most${scored ? "" : " unscored"}`, text: scored ? "MOST (+1)" : "MOST" })
       );
     }
     if (isLeast) {
       row.appendChild(
-        el("span", {
-          class: `pick-tag least${scored ? "" : lost ? " penalty" : " unscored"}`,
-          text: scored ? "LEAST (+1)" : lost ? "LEAST (-1)" : "LEAST",
-        })
+        el("span", { class: `pick-tag least${scored ? "" : " unscored"}`, text: scored ? "LEAST (+1)" : "LEAST" })
       );
     }
     row.appendChild(el("span", { class: "player-name", text: player.name }));
@@ -636,9 +621,8 @@ function scoreboard(list) {
   const board = el("div", { class: "scoreboard" });
   const sorted = list || game.standings();
   sorted.forEach((p, i) => {
-    const isJudge = game.phase !== PHASES.GAME_OVER && p.id === game.judge.id;
     board.appendChild(
-      el("div", { class: `score-row${isJudge ? " judge-marker" : ""}` }, [
+      el("div", { class: "score-row" }, [
         el("span", {}, [
           el("span", { class: "rank", text: `${i + 1}.` }),
           document.createTextNode(p.name),

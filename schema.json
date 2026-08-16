@@ -1,0 +1,86 @@
+{
+  "instance": "56358_wheres_the_line",
+  "generatedAt": "2026-08-16T00:31:44.990Z",
+  "tables": {
+    "deck_cards": {
+      "primaryKey": "id",
+      "columns": {
+        "id": { "type": "integer", "nullable": false, "autoIncrement": true },
+        "room_id": { "type": "integer", "nullable": false, "indexed": true, "foreignKey": { "table": "rooms", "column": "id", "onDelete": "cascade", "onUpdate": "cascade" } },
+        "deck_type": { "type": "enum", "nullable": false },
+        "card_text": { "type": "string", "nullable": false },
+        "status": { "type": "enum", "nullable": true, "default": "'IN_DRAW_PILE'" },
+        "holder_player_id": { "type": "integer", "nullable": true, "default": null, "indexed": true, "foreignKey": { "table": "players", "column": "id", "onDelete": "set null", "onUpdate": "cascade" } },
+        "draw_order": { "type": "integer", "nullable": true, "default": null }
+      }
+    },
+    "judging_slots": {
+      "primaryKey": "id",
+      "columns": {
+        "id": { "type": "integer", "nullable": false, "autoIncrement": true },
+        "round_id": { "type": "integer", "nullable": false, "indexed": true, "foreignKey": { "table": "rounds", "column": "id", "onDelete": "cascade", "onUpdate": "cascade" } },
+        "submission_id": { "type": "integer", "nullable": false, "indexed": true, "foreignKey": { "table": "submissions", "column": "id", "onDelete": "cascade", "onUpdate": "cascade" } },
+        "bucket": { "type": "enum", "nullable": true, "default": "'NEUTRAL'" },
+        "position": { "type": "integer", "nullable": true, "default": null }
+      }
+    },
+    "ncba_rls_config": {
+      "primaryKey": "table_name",
+      "columns": {
+        "table_name": { "type": "string", "nullable": false },
+        "policy": { "type": "string", "nullable": false }
+      }
+    },
+    "players": {
+      "primaryKey": "id",
+      "columns": {
+        "id": { "type": "integer", "nullable": false, "autoIncrement": true },
+        "room_id": { "type": "integer", "nullable": false, "indexed": true, "foreignKey": { "table": "rooms", "column": "id", "onDelete": "cascade", "onUpdate": "cascade" } },
+        "display_name": { "type": "string", "nullable": false },
+        "join_order": { "type": "integer", "nullable": false },
+        "session_token": { "type": "string", "nullable": false },
+        "connection_status": { "type": "enum", "nullable": true, "default": "'CONNECTED'" },
+        "last_seen_at": { "type": "datetime", "nullable": true, "default": "NULL" },
+        "is_host": { "type": "integer", "nullable": true, "default": 0 },
+        "score": { "type": "integer", "nullable": true, "default": 0 }
+      }
+    },
+    "rooms": {
+      "primaryKey": "id",
+      "columns": {
+        "id": { "type": "integer", "nullable": false, "autoIncrement": true },
+        "room_code": { "type": "string", "nullable": false },
+        "status": { "type": "enum", "nullable": false, "default": "'LOBBY'" },
+        "host_player_id": { "type": "integer", "nullable": true, "default": null },
+        "target_score": { "type": "integer", "nullable": true, "default": 7 },
+        "hand_size": { "type": "integer", "nullable": true, "default": 5 },
+        "current_round_number": { "type": "integer", "nullable": true, "default": 0 },
+        "current_phase": { "type": "string", "nullable": true, "default": "NULL" }
+      }
+    },
+    "rounds": {
+      "primaryKey": "id",
+      "columns": {
+        "id": { "type": "integer", "nullable": false, "autoIncrement": true },
+        "room_id": { "type": "integer", "nullable": false, "indexed": true, "foreignKey": { "table": "rooms", "column": "id", "onDelete": "cascade", "onUpdate": "cascade" } },
+        "round_number": { "type": "integer", "nullable": false },
+        "phase": { "type": "enum", "nullable": false, "default": "'ROUND_INTRO'" },
+        "judge_player_id": { "type": "integer", "nullable": true, "default": null, "indexed": true, "foreignKey": { "table": "players", "column": "id", "onDelete": "set null", "onUpdate": "cascade" } },
+        "condition_card_text": { "type": "string", "nullable": true, "default": "NULL" },
+        "round_goal": { "type": "enum", "nullable": true, "default": "NULL" },
+        "confirmed_at": { "type": "datetime", "nullable": true, "default": "NULL" }
+      }
+    },
+    "submissions": {
+      "primaryKey": "id",
+      "columns": {
+        "id": { "type": "integer", "nullable": false, "autoIncrement": true },
+        "round_id": { "type": "integer", "nullable": false, "indexed": true, "foreignKey": { "table": "rounds", "column": "id", "onDelete": "cascade", "onUpdate": "cascade" } },
+        "player_id": { "type": "integer", "nullable": false, "indexed": true, "foreignKey": { "table": "players", "column": "id", "onDelete": "cascade", "onUpdate": "cascade" } },
+        "submitted_at": { "type": "datetime", "nullable": true, "default": "NULL" },
+        "round_score_delta": { "type": "integer", "nullable": true, "default": null },
+        "card_text": { "type": "string", "nullable": true, "default": "NULL" }
+      }
+    }
+  }
+}

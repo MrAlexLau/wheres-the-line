@@ -1,0 +1,4487 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API documentation for 56358_wheres_the_line",
+    "version": "1.0.0",
+    "description": "API documentation for 56358_wheres_the_line"
+  },
+  "servers": [
+    {
+      "url": "https://openapi.nocodebackend.com"
+    }
+  ],
+  "paths": {
+    "/create/deck_cards?Instance=56358_wheres_the_line": {
+      "post": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Create a new record in deck_cards",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "room_id": {
+                    "type": "integer"
+                  },
+                  "deck_type": {
+                    "type": "string",
+                    "enum": [
+                      "condition",
+                      "action"
+                    ],
+                    "description": "dropdown: choose one of [condition, action]"
+                  },
+                  "card_text": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "in_draw_pile",
+                      "discarded",
+                      "in_hand"
+                    ],
+                    "description": "dropdown: choose one of [in_draw_pile, discarded, in_hand]"
+                  },
+                  "holder_player_id": {
+                    "type": "integer"
+                  },
+                  "draw_order": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successfully created the record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Record created successfully"
+                    },
+                    "id": {
+                      "type": "integer",
+                      "description": "ID of the newly created record"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/read/deck_cards?Instance=56358_wheres_the_line": {
+      "get": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Retrieve all records from deck_cards",
+        "description": "### Filtering\n\nYou can filter results by adding column-based query parameters directly to the URL.\nOperators use bracket notation:\n\n| Operator | Example | Meaning |\n|---|---|---|\n| `field=value` | `?status=active` | Equal (default) |\n| `field[ne]=value` | `?status[ne]=inactive` | Not equal |\n| `field[gt]=value` | `?price[gt]=100` | Greater than |\n| `field[gte]=value` | `?date[gte]=2024-05-01` | Greater than or equal |\n| `field[lt]=value` | `?score[lt]=500` | Less than |\n| `field[lte]=value` | `?score[lte]=800` | Less than or equal |\n| `field[in]=value` | `?type[in]=a,b,c` | In list (comma-separated) |\n| `field[like]=value` | `?name[like]=john` | Partial match |\n\n**Available columns:** `room_id`, `deck_type`, `card_text`, `status`, `holder_player_id`, `draw_order`\n\n**Example:**\n```\n?Instance={db_name}&status=active&price[gte]=100&price[lte]=500&sort=price&order=desc&page=1&limit=20\n```",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "query",
+            "name": "queryParams",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filters, pagination & sorting as key=value pairs separated by &. Example: status=active&page=2&limit=5&sort=name&order=asc. Available columns: room_id, deck_type, card_text, status, holder_player_id, draw_order"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "room_id": {
+                            "type": "integer"
+                          },
+                          "deck_type": {
+                            "type": "string",
+                            "enum": [
+                              "condition",
+                              "action"
+                            ],
+                            "description": "dropdown: choose one of [condition, action]"
+                          },
+                          "card_text": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "in_draw_pile",
+                              "discarded",
+                              "in_hand"
+                            ],
+                            "description": "dropdown: choose one of [in_draw_pile, discarded, in_hand]"
+                          },
+                          "holder_player_id": {
+                            "type": "integer"
+                          },
+                          "draw_order": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/read/deck_cards/{id}?Instance=56358_wheres_the_line": {
+      "get": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Retrieve a record by ID from deck_cards",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the record to retrieve"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "room_id": {
+                          "type": "integer"
+                        },
+                        "deck_type": {
+                          "type": "string",
+                          "enum": [
+                            "condition",
+                            "action"
+                          ],
+                          "description": "dropdown: choose one of [condition, action]"
+                        },
+                        "card_text": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "in_draw_pile",
+                            "discarded",
+                            "in_hand"
+                          ],
+                          "description": "dropdown: choose one of [in_draw_pile, discarded, in_hand]"
+                        },
+                        "holder_player_id": {
+                          "type": "integer"
+                        },
+                        "draw_order": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Record Not Found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/search/deck_cards?Instance=56358_wheres_the_line": {
+      "post": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Search for records in deck_cards",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "room_id": {
+                    "type": "integer"
+                  },
+                  "deck_type": {
+                    "type": "string",
+                    "enum": [
+                      "condition",
+                      "action"
+                    ],
+                    "description": "dropdown: choose one of [condition, action]"
+                  },
+                  "card_text": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "in_draw_pile",
+                      "discarded",
+                      "in_hand"
+                    ],
+                    "description": "dropdown: choose one of [in_draw_pile, discarded, in_hand]"
+                  },
+                  "holder_player_id": {
+                    "type": "integer"
+                  },
+                  "draw_order": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved matching records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "room_id": {
+                            "type": "integer"
+                          },
+                          "deck_type": {
+                            "type": "string",
+                            "enum": [
+                              "condition",
+                              "action"
+                            ],
+                            "description": "dropdown: choose one of [condition, action]"
+                          },
+                          "card_text": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "in_draw_pile",
+                              "discarded",
+                              "in_hand"
+                            ],
+                            "description": "dropdown: choose one of [in_draw_pile, discarded, in_hand]"
+                          },
+                          "holder_player_id": {
+                            "type": "integer"
+                          },
+                          "draw_order": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/update/deck_cards/{id}?Instance=56358_wheres_the_line": {
+      "put": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Update a record in deck_cards",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the record to update"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "room_id": {
+                    "type": "integer"
+                  },
+                  "deck_type": {
+                    "type": "string",
+                    "enum": [
+                      "condition",
+                      "action"
+                    ],
+                    "description": "dropdown: choose one of [condition, action]"
+                  },
+                  "card_text": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "in_draw_pile",
+                      "discarded",
+                      "in_hand"
+                    ],
+                    "description": "dropdown: choose one of [in_draw_pile, discarded, in_hand]"
+                  },
+                  "holder_player_id": {
+                    "type": "integer"
+                  },
+                  "draw_order": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully updated the record"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/delete/deck_cards/{id}?Instance=56358_wheres_the_line": {
+      "delete": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Delete a record from deck_cards",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the record to delete"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted the record"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Record Not Found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/bulk/create/deck_cards?Instance=56358_wheres_the_line": {
+      "post": {
+        "tags": [
+          "Bulk Endpoints"
+        ],
+        "summary": "Bulk create records in deck_cards (Max 500)",
+        "description": "### Bulk Create Guide\nInsert multiple records into the database with a single API call.\n\n- **Max Limit**: 500 records per request.\n- **Performance**: Highly recommended over looping single POST requests.\n\n**Response**: Returns an HTTP 207 Multi-Status with a summary and a per-record breakdown of successes and failures.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "records": {
+                    "type": "array",
+                    "description": "An array of objects to insert",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "room_id": {
+                          "type": "integer"
+                        },
+                        "deck_type": {
+                          "type": "string",
+                          "enum": [
+                            "condition",
+                            "action"
+                          ],
+                          "description": "dropdown: choose one of [condition, action]"
+                        },
+                        "card_text": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "in_draw_pile",
+                            "discarded",
+                            "in_hand"
+                          ],
+                          "description": "dropdown: choose one of [in_draw_pile, discarded, in_hand]"
+                        },
+                        "holder_player_id": {
+                          "type": "integer"
+                        },
+                        "draw_order": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "records": [
+                  {
+                    "room_id": 0,
+                    "deck_type": "string",
+                    "card_text": "string",
+                    "status": "string",
+                    "holder_player_id": 0,
+                    "draw_order": 0
+                  },
+                  {
+                    "room_id": 0,
+                    "deck_type": "string",
+                    "card_text": "string",
+                    "status": "string",
+                    "holder_player_id": 0,
+                    "draw_order": 0
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "207": {
+            "description": "Multi-Status response indicating success/failure per record"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/bulk/update/deck_cards?Instance=56358_wheres_the_line": {
+      "put": {
+        "tags": [
+          "Bulk Endpoints"
+        ],
+        "summary": "Bulk update records in deck_cards (Max 500)",
+        "description": "### Bulk Update Guide\nUpdate multiple existing records simultaneously using a single transaction.\n\n- **Requirement**: Every object in the `records` array MUST include the primary key (`id`).\n- **Max Limit**: 500 records per request.\n- **Atomic**: Wraps updates in a transaction (all-or-nothing per database rules).",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "records": {
+                    "type": "array",
+                    "description": "An array of objects to update. Must include the primary key.",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "room_id": {
+                          "type": "integer"
+                        },
+                        "deck_type": {
+                          "type": "string",
+                          "enum": [
+                            "condition",
+                            "action"
+                          ],
+                          "description": "dropdown: choose one of [condition, action]"
+                        },
+                        "card_text": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "in_draw_pile",
+                            "discarded",
+                            "in_hand"
+                          ],
+                          "description": "dropdown: choose one of [in_draw_pile, discarded, in_hand]"
+                        },
+                        "holder_player_id": {
+                          "type": "integer"
+                        },
+                        "draw_order": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "records": [
+                  {
+                    "id": 0,
+                    "room_id": 0,
+                    "deck_type": "string",
+                    "card_text": "string",
+                    "status": "string",
+                    "holder_player_id": 0,
+                    "draw_order": 0
+                  },
+                  {
+                    "id": 0,
+                    "room_id": 0,
+                    "deck_type": "string",
+                    "card_text": "string",
+                    "status": "string",
+                    "holder_player_id": 0,
+                    "draw_order": 0
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "207": {
+            "description": "Multi-Status response indicating success/failure per record"
+          },
+          "400": {
+            "description": "Bad Request (e.g. missing primary key)"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/bulk/delete/deck_cards?Instance=56358_wheres_the_line": {
+      "delete": {
+        "tags": [
+          "Bulk Endpoints"
+        ],
+        "summary": "Bulk delete records from deck_cards (Max 500)",
+        "description": "### Bulk Delete Guide\nDelete multiple records by providing the IDs of all the records you want to delete.\n\n- **Max Limit**: 500 IDs per request.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "description": "An array of primary keys to delete",
+                    "items": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully processed bulk delete"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/create/judging_slots?Instance=56358_wheres_the_line": {
+      "post": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Create a new record in judging_slots",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "round_id": {
+                    "type": "integer"
+                  },
+                  "submission_id": {
+                    "type": "integer"
+                  },
+                  "bucket": {
+                    "type": "string",
+                    "enum": [
+                      "neutral",
+                      "would",
+                      "wouldnt"
+                    ],
+                    "description": "dropdown: choose one of [neutral, would, wouldnt]"
+                  },
+                  "position": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successfully created the record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Record created successfully"
+                    },
+                    "id": {
+                      "type": "integer",
+                      "description": "ID of the newly created record"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/read/judging_slots?Instance=56358_wheres_the_line": {
+      "get": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Retrieve all records from judging_slots",
+        "description": "### Filtering\n\nYou can filter results by adding column-based query parameters directly to the URL.\nOperators use bracket notation:\n\n| Operator | Example | Meaning |\n|---|---|---|\n| `field=value` | `?status=active` | Equal (default) |\n| `field[ne]=value` | `?status[ne]=inactive` | Not equal |\n| `field[gt]=value` | `?price[gt]=100` | Greater than |\n| `field[gte]=value` | `?date[gte]=2024-05-01` | Greater than or equal |\n| `field[lt]=value` | `?score[lt]=500` | Less than |\n| `field[lte]=value` | `?score[lte]=800` | Less than or equal |\n| `field[in]=value` | `?type[in]=a,b,c` | In list (comma-separated) |\n| `field[like]=value` | `?name[like]=john` | Partial match |\n\n**Available columns:** `round_id`, `submission_id`, `bucket`, `position`\n\n**Example:**\n```\n?Instance={db_name}&status=active&price[gte]=100&price[lte]=500&sort=price&order=desc&page=1&limit=20\n```",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "query",
+            "name": "queryParams",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filters, pagination & sorting as key=value pairs separated by &. Example: status=active&page=2&limit=5&sort=name&order=asc. Available columns: round_id, submission_id, bucket, position"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "round_id": {
+                            "type": "integer"
+                          },
+                          "submission_id": {
+                            "type": "integer"
+                          },
+                          "bucket": {
+                            "type": "string",
+                            "enum": [
+                              "neutral",
+                              "would",
+                              "wouldnt"
+                            ],
+                            "description": "dropdown: choose one of [neutral, would, wouldnt]"
+                          },
+                          "position": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/read/judging_slots/{id}?Instance=56358_wheres_the_line": {
+      "get": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Retrieve a record by ID from judging_slots",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the record to retrieve"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "round_id": {
+                          "type": "integer"
+                        },
+                        "submission_id": {
+                          "type": "integer"
+                        },
+                        "bucket": {
+                          "type": "string",
+                          "enum": [
+                            "neutral",
+                            "would",
+                            "wouldnt"
+                          ],
+                          "description": "dropdown: choose one of [neutral, would, wouldnt]"
+                        },
+                        "position": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Record Not Found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/search/judging_slots?Instance=56358_wheres_the_line": {
+      "post": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Search for records in judging_slots",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "round_id": {
+                    "type": "integer"
+                  },
+                  "submission_id": {
+                    "type": "integer"
+                  },
+                  "bucket": {
+                    "type": "string",
+                    "enum": [
+                      "neutral",
+                      "would",
+                      "wouldnt"
+                    ],
+                    "description": "dropdown: choose one of [neutral, would, wouldnt]"
+                  },
+                  "position": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved matching records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "round_id": {
+                            "type": "integer"
+                          },
+                          "submission_id": {
+                            "type": "integer"
+                          },
+                          "bucket": {
+                            "type": "string",
+                            "enum": [
+                              "neutral",
+                              "would",
+                              "wouldnt"
+                            ],
+                            "description": "dropdown: choose one of [neutral, would, wouldnt]"
+                          },
+                          "position": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/update/judging_slots/{id}?Instance=56358_wheres_the_line": {
+      "put": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Update a record in judging_slots",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the record to update"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "round_id": {
+                    "type": "integer"
+                  },
+                  "submission_id": {
+                    "type": "integer"
+                  },
+                  "bucket": {
+                    "type": "string",
+                    "enum": [
+                      "neutral",
+                      "would",
+                      "wouldnt"
+                    ],
+                    "description": "dropdown: choose one of [neutral, would, wouldnt]"
+                  },
+                  "position": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully updated the record"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/delete/judging_slots/{id}?Instance=56358_wheres_the_line": {
+      "delete": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Delete a record from judging_slots",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the record to delete"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted the record"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Record Not Found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/bulk/create/judging_slots?Instance=56358_wheres_the_line": {
+      "post": {
+        "tags": [
+          "Bulk Endpoints"
+        ],
+        "summary": "Bulk create records in judging_slots (Max 500)",
+        "description": "### Bulk Create Guide\nInsert multiple records into the database with a single API call.\n\n- **Max Limit**: 500 records per request.\n- **Performance**: Highly recommended over looping single POST requests.\n\n**Response**: Returns an HTTP 207 Multi-Status with a summary and a per-record breakdown of successes and failures.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "records": {
+                    "type": "array",
+                    "description": "An array of objects to insert",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "round_id": {
+                          "type": "integer"
+                        },
+                        "submission_id": {
+                          "type": "integer"
+                        },
+                        "bucket": {
+                          "type": "string",
+                          "enum": [
+                            "neutral",
+                            "would",
+                            "wouldnt"
+                          ],
+                          "description": "dropdown: choose one of [neutral, would, wouldnt]"
+                        },
+                        "position": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "records": [
+                  {
+                    "round_id": 0,
+                    "submission_id": 0,
+                    "bucket": "string",
+                    "position": 0
+                  },
+                  {
+                    "round_id": 0,
+                    "submission_id": 0,
+                    "bucket": "string",
+                    "position": 0
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "207": {
+            "description": "Multi-Status response indicating success/failure per record"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/bulk/update/judging_slots?Instance=56358_wheres_the_line": {
+      "put": {
+        "tags": [
+          "Bulk Endpoints"
+        ],
+        "summary": "Bulk update records in judging_slots (Max 500)",
+        "description": "### Bulk Update Guide\nUpdate multiple existing records simultaneously using a single transaction.\n\n- **Requirement**: Every object in the `records` array MUST include the primary key (`id`).\n- **Max Limit**: 500 records per request.\n- **Atomic**: Wraps updates in a transaction (all-or-nothing per database rules).",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "records": {
+                    "type": "array",
+                    "description": "An array of objects to update. Must include the primary key.",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "round_id": {
+                          "type": "integer"
+                        },
+                        "submission_id": {
+                          "type": "integer"
+                        },
+                        "bucket": {
+                          "type": "string",
+                          "enum": [
+                            "neutral",
+                            "would",
+                            "wouldnt"
+                          ],
+                          "description": "dropdown: choose one of [neutral, would, wouldnt]"
+                        },
+                        "position": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "records": [
+                  {
+                    "id": 0,
+                    "round_id": 0,
+                    "submission_id": 0,
+                    "bucket": "string",
+                    "position": 0
+                  },
+                  {
+                    "id": 0,
+                    "round_id": 0,
+                    "submission_id": 0,
+                    "bucket": "string",
+                    "position": 0
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "207": {
+            "description": "Multi-Status response indicating success/failure per record"
+          },
+          "400": {
+            "description": "Bad Request (e.g. missing primary key)"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/bulk/delete/judging_slots?Instance=56358_wheres_the_line": {
+      "delete": {
+        "tags": [
+          "Bulk Endpoints"
+        ],
+        "summary": "Bulk delete records from judging_slots (Max 500)",
+        "description": "### Bulk Delete Guide\nDelete multiple records by providing the IDs of all the records you want to delete.\n\n- **Max Limit**: 500 IDs per request.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "description": "An array of primary keys to delete",
+                    "items": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully processed bulk delete"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/create/players?Instance=56358_wheres_the_line": {
+      "post": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Create a new record in players",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "room_id": {
+                    "type": "integer"
+                  },
+                  "display_name": {
+                    "type": "string"
+                  },
+                  "join_order": {
+                    "type": "integer"
+                  },
+                  "session_token": {
+                    "type": "string"
+                  },
+                  "connection_status": {
+                    "type": "string",
+                    "enum": [
+                      "connected",
+                      "disconnected"
+                    ],
+                    "description": "dropdown: choose one of [connected, disconnected]"
+                  },
+                  "last_seen_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2026-01-01 00:00:00"
+                  },
+                  "is_host": {
+                    "type": "integer"
+                  },
+                  "score": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successfully created the record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Record created successfully"
+                    },
+                    "id": {
+                      "type": "integer",
+                      "description": "ID of the newly created record"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/read/players?Instance=56358_wheres_the_line": {
+      "get": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Retrieve all records from players",
+        "description": "### Filtering\n\nYou can filter results by adding column-based query parameters directly to the URL.\nOperators use bracket notation:\n\n| Operator | Example | Meaning |\n|---|---|---|\n| `field=value` | `?status=active` | Equal (default) |\n| `field[ne]=value` | `?status[ne]=inactive` | Not equal |\n| `field[gt]=value` | `?price[gt]=100` | Greater than |\n| `field[gte]=value` | `?date[gte]=2024-05-01` | Greater than or equal |\n| `field[lt]=value` | `?score[lt]=500` | Less than |\n| `field[lte]=value` | `?score[lte]=800` | Less than or equal |\n| `field[in]=value` | `?type[in]=a,b,c` | In list (comma-separated) |\n| `field[like]=value` | `?name[like]=john` | Partial match |\n\n**Available columns:** `room_id`, `display_name`, `join_order`, `session_token`, `connection_status`, `last_seen_at`, `is_host`, `score`\n\n**Example:**\n```\n?Instance={db_name}&status=active&price[gte]=100&price[lte]=500&sort=price&order=desc&page=1&limit=20\n```",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "query",
+            "name": "queryParams",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filters, pagination & sorting as key=value pairs separated by &. Example: status=active&page=2&limit=5&sort=name&order=asc. Available columns: room_id, display_name, join_order, session_token, connection_status, last_seen_at, is_host, score"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "room_id": {
+                            "type": "integer"
+                          },
+                          "display_name": {
+                            "type": "string"
+                          },
+                          "join_order": {
+                            "type": "integer"
+                          },
+                          "session_token": {
+                            "type": "string"
+                          },
+                          "connection_status": {
+                            "type": "string",
+                            "enum": [
+                              "connected",
+                              "disconnected"
+                            ],
+                            "description": "dropdown: choose one of [connected, disconnected]"
+                          },
+                          "last_seen_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2026-01-01 00:00:00"
+                          },
+                          "is_host": {
+                            "type": "integer"
+                          },
+                          "score": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/read/players/{id}?Instance=56358_wheres_the_line": {
+      "get": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Retrieve a record by ID from players",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the record to retrieve"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "room_id": {
+                          "type": "integer"
+                        },
+                        "display_name": {
+                          "type": "string"
+                        },
+                        "join_order": {
+                          "type": "integer"
+                        },
+                        "session_token": {
+                          "type": "string"
+                        },
+                        "connection_status": {
+                          "type": "string",
+                          "enum": [
+                            "connected",
+                            "disconnected"
+                          ],
+                          "description": "dropdown: choose one of [connected, disconnected]"
+                        },
+                        "last_seen_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2026-01-01 00:00:00"
+                        },
+                        "is_host": {
+                          "type": "integer"
+                        },
+                        "score": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Record Not Found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/search/players?Instance=56358_wheres_the_line": {
+      "post": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Search for records in players",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "room_id": {
+                    "type": "integer"
+                  },
+                  "display_name": {
+                    "type": "string"
+                  },
+                  "join_order": {
+                    "type": "integer"
+                  },
+                  "session_token": {
+                    "type": "string"
+                  },
+                  "connection_status": {
+                    "type": "string",
+                    "enum": [
+                      "connected",
+                      "disconnected"
+                    ],
+                    "description": "dropdown: choose one of [connected, disconnected]"
+                  },
+                  "last_seen_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2026-01-01 00:00:00"
+                  },
+                  "is_host": {
+                    "type": "integer"
+                  },
+                  "score": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved matching records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "room_id": {
+                            "type": "integer"
+                          },
+                          "display_name": {
+                            "type": "string"
+                          },
+                          "join_order": {
+                            "type": "integer"
+                          },
+                          "session_token": {
+                            "type": "string"
+                          },
+                          "connection_status": {
+                            "type": "string",
+                            "enum": [
+                              "connected",
+                              "disconnected"
+                            ],
+                            "description": "dropdown: choose one of [connected, disconnected]"
+                          },
+                          "last_seen_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2026-01-01 00:00:00"
+                          },
+                          "is_host": {
+                            "type": "integer"
+                          },
+                          "score": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/update/players/{id}?Instance=56358_wheres_the_line": {
+      "put": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Update a record in players",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the record to update"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "room_id": {
+                    "type": "integer"
+                  },
+                  "display_name": {
+                    "type": "string"
+                  },
+                  "join_order": {
+                    "type": "integer"
+                  },
+                  "session_token": {
+                    "type": "string"
+                  },
+                  "connection_status": {
+                    "type": "string",
+                    "enum": [
+                      "connected",
+                      "disconnected"
+                    ],
+                    "description": "dropdown: choose one of [connected, disconnected]"
+                  },
+                  "last_seen_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2026-01-01 00:00:00"
+                  },
+                  "is_host": {
+                    "type": "integer"
+                  },
+                  "score": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully updated the record"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/delete/players/{id}?Instance=56358_wheres_the_line": {
+      "delete": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Delete a record from players",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the record to delete"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted the record"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Record Not Found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/bulk/create/players?Instance=56358_wheres_the_line": {
+      "post": {
+        "tags": [
+          "Bulk Endpoints"
+        ],
+        "summary": "Bulk create records in players (Max 500)",
+        "description": "### Bulk Create Guide\nInsert multiple records into the database with a single API call.\n\n- **Max Limit**: 500 records per request.\n- **Performance**: Highly recommended over looping single POST requests.\n\n**Response**: Returns an HTTP 207 Multi-Status with a summary and a per-record breakdown of successes and failures.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "records": {
+                    "type": "array",
+                    "description": "An array of objects to insert",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "room_id": {
+                          "type": "integer"
+                        },
+                        "display_name": {
+                          "type": "string"
+                        },
+                        "join_order": {
+                          "type": "integer"
+                        },
+                        "session_token": {
+                          "type": "string"
+                        },
+                        "connection_status": {
+                          "type": "string",
+                          "enum": [
+                            "connected",
+                            "disconnected"
+                          ],
+                          "description": "dropdown: choose one of [connected, disconnected]"
+                        },
+                        "last_seen_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2026-01-01 00:00:00"
+                        },
+                        "is_host": {
+                          "type": "integer"
+                        },
+                        "score": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "records": [
+                  {
+                    "room_id": 0,
+                    "display_name": "string",
+                    "join_order": 0,
+                    "session_token": "string",
+                    "connection_status": "string",
+                    "last_seen_at": "2026-01-01 00:00:00",
+                    "is_host": 0,
+                    "score": 0
+                  },
+                  {
+                    "room_id": 0,
+                    "display_name": "string",
+                    "join_order": 0,
+                    "session_token": "string",
+                    "connection_status": "string",
+                    "last_seen_at": "2026-01-01 00:00:00",
+                    "is_host": 0,
+                    "score": 0
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "207": {
+            "description": "Multi-Status response indicating success/failure per record"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/bulk/update/players?Instance=56358_wheres_the_line": {
+      "put": {
+        "tags": [
+          "Bulk Endpoints"
+        ],
+        "summary": "Bulk update records in players (Max 500)",
+        "description": "### Bulk Update Guide\nUpdate multiple existing records simultaneously using a single transaction.\n\n- **Requirement**: Every object in the `records` array MUST include the primary key (`id`).\n- **Max Limit**: 500 records per request.\n- **Atomic**: Wraps updates in a transaction (all-or-nothing per database rules).",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "records": {
+                    "type": "array",
+                    "description": "An array of objects to update. Must include the primary key.",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "room_id": {
+                          "type": "integer"
+                        },
+                        "display_name": {
+                          "type": "string"
+                        },
+                        "join_order": {
+                          "type": "integer"
+                        },
+                        "session_token": {
+                          "type": "string"
+                        },
+                        "connection_status": {
+                          "type": "string",
+                          "enum": [
+                            "connected",
+                            "disconnected"
+                          ],
+                          "description": "dropdown: choose one of [connected, disconnected]"
+                        },
+                        "last_seen_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2026-01-01 00:00:00"
+                        },
+                        "is_host": {
+                          "type": "integer"
+                        },
+                        "score": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "records": [
+                  {
+                    "id": 0,
+                    "room_id": 0,
+                    "display_name": "string",
+                    "join_order": 0,
+                    "session_token": "string",
+                    "connection_status": "string",
+                    "last_seen_at": "2026-01-01 00:00:00",
+                    "is_host": 0,
+                    "score": 0
+                  },
+                  {
+                    "id": 0,
+                    "room_id": 0,
+                    "display_name": "string",
+                    "join_order": 0,
+                    "session_token": "string",
+                    "connection_status": "string",
+                    "last_seen_at": "2026-01-01 00:00:00",
+                    "is_host": 0,
+                    "score": 0
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "207": {
+            "description": "Multi-Status response indicating success/failure per record"
+          },
+          "400": {
+            "description": "Bad Request (e.g. missing primary key)"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/bulk/delete/players?Instance=56358_wheres_the_line": {
+      "delete": {
+        "tags": [
+          "Bulk Endpoints"
+        ],
+        "summary": "Bulk delete records from players (Max 500)",
+        "description": "### Bulk Delete Guide\nDelete multiple records by providing the IDs of all the records you want to delete.\n\n- **Max Limit**: 500 IDs per request.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "description": "An array of primary keys to delete",
+                    "items": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully processed bulk delete"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/create/rooms?Instance=56358_wheres_the_line": {
+      "post": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Create a new record in rooms",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "room_code": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "lobby",
+                      "in_progress",
+                      "complete",
+                      "abandoned"
+                    ],
+                    "description": "dropdown: choose one of [lobby, in_progress, complete, abandoned]"
+                  },
+                  "host_player_id": {
+                    "type": "integer"
+                  },
+                  "target_score": {
+                    "type": "integer"
+                  },
+                  "hand_size": {
+                    "type": "integer"
+                  },
+                  "current_round_number": {
+                    "type": "integer"
+                  },
+                  "current_phase": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successfully created the record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Record created successfully"
+                    },
+                    "id": {
+                      "type": "integer",
+                      "description": "ID of the newly created record"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/read/rooms?Instance=56358_wheres_the_line": {
+      "get": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Retrieve all records from rooms",
+        "description": "### Filtering\n\nYou can filter results by adding column-based query parameters directly to the URL.\nOperators use bracket notation:\n\n| Operator | Example | Meaning |\n|---|---|---|\n| `field=value` | `?status=active` | Equal (default) |\n| `field[ne]=value` | `?status[ne]=inactive` | Not equal |\n| `field[gt]=value` | `?price[gt]=100` | Greater than |\n| `field[gte]=value` | `?date[gte]=2024-05-01` | Greater than or equal |\n| `field[lt]=value` | `?score[lt]=500` | Less than |\n| `field[lte]=value` | `?score[lte]=800` | Less than or equal |\n| `field[in]=value` | `?type[in]=a,b,c` | In list (comma-separated) |\n| `field[like]=value` | `?name[like]=john` | Partial match |\n\n**Available columns:** `room_code`, `status`, `host_player_id`, `target_score`, `hand_size`, `current_round_number`, `current_phase`\n\n**Example:**\n```\n?Instance={db_name}&status=active&price[gte]=100&price[lte]=500&sort=price&order=desc&page=1&limit=20\n```",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "query",
+            "name": "queryParams",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filters, pagination & sorting as key=value pairs separated by &. Example: status=active&page=2&limit=5&sort=name&order=asc. Available columns: room_code, status, host_player_id, target_score, hand_size, current_round_number, current_phase"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "room_code": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "lobby",
+                              "in_progress",
+                              "complete",
+                              "abandoned"
+                            ],
+                            "description": "dropdown: choose one of [lobby, in_progress, complete, abandoned]"
+                          },
+                          "host_player_id": {
+                            "type": "integer"
+                          },
+                          "target_score": {
+                            "type": "integer"
+                          },
+                          "hand_size": {
+                            "type": "integer"
+                          },
+                          "current_round_number": {
+                            "type": "integer"
+                          },
+                          "current_phase": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/read/rooms/{id}?Instance=56358_wheres_the_line": {
+      "get": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Retrieve a record by ID from rooms",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the record to retrieve"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "room_code": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "lobby",
+                            "in_progress",
+                            "complete",
+                            "abandoned"
+                          ],
+                          "description": "dropdown: choose one of [lobby, in_progress, complete, abandoned]"
+                        },
+                        "host_player_id": {
+                          "type": "integer"
+                        },
+                        "target_score": {
+                          "type": "integer"
+                        },
+                        "hand_size": {
+                          "type": "integer"
+                        },
+                        "current_round_number": {
+                          "type": "integer"
+                        },
+                        "current_phase": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Record Not Found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/search/rooms?Instance=56358_wheres_the_line": {
+      "post": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Search for records in rooms",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "room_code": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "lobby",
+                      "in_progress",
+                      "complete",
+                      "abandoned"
+                    ],
+                    "description": "dropdown: choose one of [lobby, in_progress, complete, abandoned]"
+                  },
+                  "host_player_id": {
+                    "type": "integer"
+                  },
+                  "target_score": {
+                    "type": "integer"
+                  },
+                  "hand_size": {
+                    "type": "integer"
+                  },
+                  "current_round_number": {
+                    "type": "integer"
+                  },
+                  "current_phase": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved matching records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "room_code": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "lobby",
+                              "in_progress",
+                              "complete",
+                              "abandoned"
+                            ],
+                            "description": "dropdown: choose one of [lobby, in_progress, complete, abandoned]"
+                          },
+                          "host_player_id": {
+                            "type": "integer"
+                          },
+                          "target_score": {
+                            "type": "integer"
+                          },
+                          "hand_size": {
+                            "type": "integer"
+                          },
+                          "current_round_number": {
+                            "type": "integer"
+                          },
+                          "current_phase": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/update/rooms/{id}?Instance=56358_wheres_the_line": {
+      "put": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Update a record in rooms",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the record to update"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "room_code": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "lobby",
+                      "in_progress",
+                      "complete",
+                      "abandoned"
+                    ],
+                    "description": "dropdown: choose one of [lobby, in_progress, complete, abandoned]"
+                  },
+                  "host_player_id": {
+                    "type": "integer"
+                  },
+                  "target_score": {
+                    "type": "integer"
+                  },
+                  "hand_size": {
+                    "type": "integer"
+                  },
+                  "current_round_number": {
+                    "type": "integer"
+                  },
+                  "current_phase": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully updated the record"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/delete/rooms/{id}?Instance=56358_wheres_the_line": {
+      "delete": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Delete a record from rooms",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the record to delete"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted the record"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Record Not Found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/bulk/create/rooms?Instance=56358_wheres_the_line": {
+      "post": {
+        "tags": [
+          "Bulk Endpoints"
+        ],
+        "summary": "Bulk create records in rooms (Max 500)",
+        "description": "### Bulk Create Guide\nInsert multiple records into the database with a single API call.\n\n- **Max Limit**: 500 records per request.\n- **Performance**: Highly recommended over looping single POST requests.\n\n**Response**: Returns an HTTP 207 Multi-Status with a summary and a per-record breakdown of successes and failures.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "records": {
+                    "type": "array",
+                    "description": "An array of objects to insert",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "room_code": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "lobby",
+                            "in_progress",
+                            "complete",
+                            "abandoned"
+                          ],
+                          "description": "dropdown: choose one of [lobby, in_progress, complete, abandoned]"
+                        },
+                        "host_player_id": {
+                          "type": "integer"
+                        },
+                        "target_score": {
+                          "type": "integer"
+                        },
+                        "hand_size": {
+                          "type": "integer"
+                        },
+                        "current_round_number": {
+                          "type": "integer"
+                        },
+                        "current_phase": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "records": [
+                  {
+                    "room_code": "string",
+                    "status": "string",
+                    "host_player_id": 0,
+                    "target_score": 0,
+                    "hand_size": 0,
+                    "current_round_number": 0,
+                    "current_phase": "string"
+                  },
+                  {
+                    "room_code": "string",
+                    "status": "string",
+                    "host_player_id": 0,
+                    "target_score": 0,
+                    "hand_size": 0,
+                    "current_round_number": 0,
+                    "current_phase": "string"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "207": {
+            "description": "Multi-Status response indicating success/failure per record"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/bulk/update/rooms?Instance=56358_wheres_the_line": {
+      "put": {
+        "tags": [
+          "Bulk Endpoints"
+        ],
+        "summary": "Bulk update records in rooms (Max 500)",
+        "description": "### Bulk Update Guide\nUpdate multiple existing records simultaneously using a single transaction.\n\n- **Requirement**: Every object in the `records` array MUST include the primary key (`id`).\n- **Max Limit**: 500 records per request.\n- **Atomic**: Wraps updates in a transaction (all-or-nothing per database rules).",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "records": {
+                    "type": "array",
+                    "description": "An array of objects to update. Must include the primary key.",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "room_code": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "lobby",
+                            "in_progress",
+                            "complete",
+                            "abandoned"
+                          ],
+                          "description": "dropdown: choose one of [lobby, in_progress, complete, abandoned]"
+                        },
+                        "host_player_id": {
+                          "type": "integer"
+                        },
+                        "target_score": {
+                          "type": "integer"
+                        },
+                        "hand_size": {
+                          "type": "integer"
+                        },
+                        "current_round_number": {
+                          "type": "integer"
+                        },
+                        "current_phase": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "records": [
+                  {
+                    "id": 0,
+                    "room_code": "string",
+                    "status": "string",
+                    "host_player_id": 0,
+                    "target_score": 0,
+                    "hand_size": 0,
+                    "current_round_number": 0,
+                    "current_phase": "string"
+                  },
+                  {
+                    "id": 0,
+                    "room_code": "string",
+                    "status": "string",
+                    "host_player_id": 0,
+                    "target_score": 0,
+                    "hand_size": 0,
+                    "current_round_number": 0,
+                    "current_phase": "string"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "207": {
+            "description": "Multi-Status response indicating success/failure per record"
+          },
+          "400": {
+            "description": "Bad Request (e.g. missing primary key)"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/bulk/delete/rooms?Instance=56358_wheres_the_line": {
+      "delete": {
+        "tags": [
+          "Bulk Endpoints"
+        ],
+        "summary": "Bulk delete records from rooms (Max 500)",
+        "description": "### Bulk Delete Guide\nDelete multiple records by providing the IDs of all the records you want to delete.\n\n- **Max Limit**: 500 IDs per request.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "description": "An array of primary keys to delete",
+                    "items": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully processed bulk delete"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/create/rounds?Instance=56358_wheres_the_line": {
+      "post": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Create a new record in rounds",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "room_id": {
+                    "type": "integer"
+                  },
+                  "round_number": {
+                    "type": "integer"
+                  },
+                  "phase": {
+                    "type": "string",
+                    "enum": [
+                      "round_intro",
+                      "submitting",
+                      "judging",
+                      "reveal",
+                      "game_over"
+                    ],
+                    "description": "dropdown: choose one of [round_intro, submitting, judging, reveal, game_over]"
+                  },
+                  "judge_player_id": {
+                    "type": "integer"
+                  },
+                  "condition_card_text": {
+                    "type": "string"
+                  },
+                  "round_goal": {
+                    "type": "string",
+                    "enum": [
+                      "most",
+                      "least",
+                      "between"
+                    ],
+                    "description": "dropdown: choose one of [most, least, between]"
+                  },
+                  "confirmed_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2026-01-01 00:00:00"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successfully created the record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Record created successfully"
+                    },
+                    "id": {
+                      "type": "integer",
+                      "description": "ID of the newly created record"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/read/rounds?Instance=56358_wheres_the_line": {
+      "get": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Retrieve all records from rounds",
+        "description": "### Filtering\n\nYou can filter results by adding column-based query parameters directly to the URL.\nOperators use bracket notation:\n\n| Operator | Example | Meaning |\n|---|---|---|\n| `field=value` | `?status=active` | Equal (default) |\n| `field[ne]=value` | `?status[ne]=inactive` | Not equal |\n| `field[gt]=value` | `?price[gt]=100` | Greater than |\n| `field[gte]=value` | `?date[gte]=2024-05-01` | Greater than or equal |\n| `field[lt]=value` | `?score[lt]=500` | Less than |\n| `field[lte]=value` | `?score[lte]=800` | Less than or equal |\n| `field[in]=value` | `?type[in]=a,b,c` | In list (comma-separated) |\n| `field[like]=value` | `?name[like]=john` | Partial match |\n\n**Available columns:** `room_id`, `round_number`, `phase`, `judge_player_id`, `condition_card_text`, `round_goal`, `confirmed_at`\n\n**Example:**\n```\n?Instance={db_name}&status=active&price[gte]=100&price[lte]=500&sort=price&order=desc&page=1&limit=20\n```",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "query",
+            "name": "queryParams",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filters, pagination & sorting as key=value pairs separated by &. Example: status=active&page=2&limit=5&sort=name&order=asc. Available columns: room_id, round_number, phase, judge_player_id, condition_card_text, round_goal, confirmed_at"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "room_id": {
+                            "type": "integer"
+                          },
+                          "round_number": {
+                            "type": "integer"
+                          },
+                          "phase": {
+                            "type": "string",
+                            "enum": [
+                              "round_intro",
+                              "submitting",
+                              "judging",
+                              "reveal",
+                              "game_over"
+                            ],
+                            "description": "dropdown: choose one of [round_intro, submitting, judging, reveal, game_over]"
+                          },
+                          "judge_player_id": {
+                            "type": "integer"
+                          },
+                          "condition_card_text": {
+                            "type": "string"
+                          },
+                          "round_goal": {
+                            "type": "string",
+                            "enum": [
+                              "most",
+                              "least",
+                              "between"
+                            ],
+                            "description": "dropdown: choose one of [most, least, between]"
+                          },
+                          "confirmed_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2026-01-01 00:00:00"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/read/rounds/{id}?Instance=56358_wheres_the_line": {
+      "get": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Retrieve a record by ID from rounds",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the record to retrieve"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "room_id": {
+                          "type": "integer"
+                        },
+                        "round_number": {
+                          "type": "integer"
+                        },
+                        "phase": {
+                          "type": "string",
+                          "enum": [
+                            "round_intro",
+                            "submitting",
+                            "judging",
+                            "reveal",
+                            "game_over"
+                          ],
+                          "description": "dropdown: choose one of [round_intro, submitting, judging, reveal, game_over]"
+                        },
+                        "judge_player_id": {
+                          "type": "integer"
+                        },
+                        "condition_card_text": {
+                          "type": "string"
+                        },
+                        "round_goal": {
+                          "type": "string",
+                          "enum": [
+                            "most",
+                            "least",
+                            "between"
+                          ],
+                          "description": "dropdown: choose one of [most, least, between]"
+                        },
+                        "confirmed_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2026-01-01 00:00:00"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Record Not Found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/search/rounds?Instance=56358_wheres_the_line": {
+      "post": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Search for records in rounds",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "room_id": {
+                    "type": "integer"
+                  },
+                  "round_number": {
+                    "type": "integer"
+                  },
+                  "phase": {
+                    "type": "string",
+                    "enum": [
+                      "round_intro",
+                      "submitting",
+                      "judging",
+                      "reveal",
+                      "game_over"
+                    ],
+                    "description": "dropdown: choose one of [round_intro, submitting, judging, reveal, game_over]"
+                  },
+                  "judge_player_id": {
+                    "type": "integer"
+                  },
+                  "condition_card_text": {
+                    "type": "string"
+                  },
+                  "round_goal": {
+                    "type": "string",
+                    "enum": [
+                      "most",
+                      "least",
+                      "between"
+                    ],
+                    "description": "dropdown: choose one of [most, least, between]"
+                  },
+                  "confirmed_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2026-01-01 00:00:00"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved matching records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "room_id": {
+                            "type": "integer"
+                          },
+                          "round_number": {
+                            "type": "integer"
+                          },
+                          "phase": {
+                            "type": "string",
+                            "enum": [
+                              "round_intro",
+                              "submitting",
+                              "judging",
+                              "reveal",
+                              "game_over"
+                            ],
+                            "description": "dropdown: choose one of [round_intro, submitting, judging, reveal, game_over]"
+                          },
+                          "judge_player_id": {
+                            "type": "integer"
+                          },
+                          "condition_card_text": {
+                            "type": "string"
+                          },
+                          "round_goal": {
+                            "type": "string",
+                            "enum": [
+                              "most",
+                              "least",
+                              "between"
+                            ],
+                            "description": "dropdown: choose one of [most, least, between]"
+                          },
+                          "confirmed_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2026-01-01 00:00:00"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/update/rounds/{id}?Instance=56358_wheres_the_line": {
+      "put": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Update a record in rounds",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the record to update"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "room_id": {
+                    "type": "integer"
+                  },
+                  "round_number": {
+                    "type": "integer"
+                  },
+                  "phase": {
+                    "type": "string",
+                    "enum": [
+                      "round_intro",
+                      "submitting",
+                      "judging",
+                      "reveal",
+                      "game_over"
+                    ],
+                    "description": "dropdown: choose one of [round_intro, submitting, judging, reveal, game_over]"
+                  },
+                  "judge_player_id": {
+                    "type": "integer"
+                  },
+                  "condition_card_text": {
+                    "type": "string"
+                  },
+                  "round_goal": {
+                    "type": "string",
+                    "enum": [
+                      "most",
+                      "least",
+                      "between"
+                    ],
+                    "description": "dropdown: choose one of [most, least, between]"
+                  },
+                  "confirmed_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2026-01-01 00:00:00"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully updated the record"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/delete/rounds/{id}?Instance=56358_wheres_the_line": {
+      "delete": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Delete a record from rounds",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the record to delete"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted the record"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Record Not Found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/bulk/create/rounds?Instance=56358_wheres_the_line": {
+      "post": {
+        "tags": [
+          "Bulk Endpoints"
+        ],
+        "summary": "Bulk create records in rounds (Max 500)",
+        "description": "### Bulk Create Guide\nInsert multiple records into the database with a single API call.\n\n- **Max Limit**: 500 records per request.\n- **Performance**: Highly recommended over looping single POST requests.\n\n**Response**: Returns an HTTP 207 Multi-Status with a summary and a per-record breakdown of successes and failures.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "records": {
+                    "type": "array",
+                    "description": "An array of objects to insert",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "room_id": {
+                          "type": "integer"
+                        },
+                        "round_number": {
+                          "type": "integer"
+                        },
+                        "phase": {
+                          "type": "string",
+                          "enum": [
+                            "round_intro",
+                            "submitting",
+                            "judging",
+                            "reveal",
+                            "game_over"
+                          ],
+                          "description": "dropdown: choose one of [round_intro, submitting, judging, reveal, game_over]"
+                        },
+                        "judge_player_id": {
+                          "type": "integer"
+                        },
+                        "condition_card_text": {
+                          "type": "string"
+                        },
+                        "round_goal": {
+                          "type": "string",
+                          "enum": [
+                            "most",
+                            "least",
+                            "between"
+                          ],
+                          "description": "dropdown: choose one of [most, least, between]"
+                        },
+                        "confirmed_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2026-01-01 00:00:00"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "records": [
+                  {
+                    "room_id": 0,
+                    "round_number": 0,
+                    "phase": "string",
+                    "judge_player_id": 0,
+                    "condition_card_text": "string",
+                    "round_goal": "string",
+                    "confirmed_at": "2026-01-01 00:00:00"
+                  },
+                  {
+                    "room_id": 0,
+                    "round_number": 0,
+                    "phase": "string",
+                    "judge_player_id": 0,
+                    "condition_card_text": "string",
+                    "round_goal": "string",
+                    "confirmed_at": "2026-01-01 00:00:00"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "207": {
+            "description": "Multi-Status response indicating success/failure per record"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/bulk/update/rounds?Instance=56358_wheres_the_line": {
+      "put": {
+        "tags": [
+          "Bulk Endpoints"
+        ],
+        "summary": "Bulk update records in rounds (Max 500)",
+        "description": "### Bulk Update Guide\nUpdate multiple existing records simultaneously using a single transaction.\n\n- **Requirement**: Every object in the `records` array MUST include the primary key (`id`).\n- **Max Limit**: 500 records per request.\n- **Atomic**: Wraps updates in a transaction (all-or-nothing per database rules).",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "records": {
+                    "type": "array",
+                    "description": "An array of objects to update. Must include the primary key.",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "room_id": {
+                          "type": "integer"
+                        },
+                        "round_number": {
+                          "type": "integer"
+                        },
+                        "phase": {
+                          "type": "string",
+                          "enum": [
+                            "round_intro",
+                            "submitting",
+                            "judging",
+                            "reveal",
+                            "game_over"
+                          ],
+                          "description": "dropdown: choose one of [round_intro, submitting, judging, reveal, game_over]"
+                        },
+                        "judge_player_id": {
+                          "type": "integer"
+                        },
+                        "condition_card_text": {
+                          "type": "string"
+                        },
+                        "round_goal": {
+                          "type": "string",
+                          "enum": [
+                            "most",
+                            "least",
+                            "between"
+                          ],
+                          "description": "dropdown: choose one of [most, least, between]"
+                        },
+                        "confirmed_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2026-01-01 00:00:00"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "records": [
+                  {
+                    "id": 0,
+                    "room_id": 0,
+                    "round_number": 0,
+                    "phase": "string",
+                    "judge_player_id": 0,
+                    "condition_card_text": "string",
+                    "round_goal": "string",
+                    "confirmed_at": "2026-01-01 00:00:00"
+                  },
+                  {
+                    "id": 0,
+                    "room_id": 0,
+                    "round_number": 0,
+                    "phase": "string",
+                    "judge_player_id": 0,
+                    "condition_card_text": "string",
+                    "round_goal": "string",
+                    "confirmed_at": "2026-01-01 00:00:00"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "207": {
+            "description": "Multi-Status response indicating success/failure per record"
+          },
+          "400": {
+            "description": "Bad Request (e.g. missing primary key)"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/bulk/delete/rounds?Instance=56358_wheres_the_line": {
+      "delete": {
+        "tags": [
+          "Bulk Endpoints"
+        ],
+        "summary": "Bulk delete records from rounds (Max 500)",
+        "description": "### Bulk Delete Guide\nDelete multiple records by providing the IDs of all the records you want to delete.\n\n- **Max Limit**: 500 IDs per request.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "description": "An array of primary keys to delete",
+                    "items": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully processed bulk delete"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/create/submissions?Instance=56358_wheres_the_line": {
+      "post": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Create a new record in submissions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "round_id": {
+                    "type": "integer"
+                  },
+                  "player_id": {
+                    "type": "integer"
+                  },
+                  "submitted_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2026-01-01 00:00:00"
+                  },
+                  "round_score_delta": {
+                    "type": "integer"
+                  },
+                  "card_text": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successfully created the record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Record created successfully"
+                    },
+                    "id": {
+                      "type": "integer",
+                      "description": "ID of the newly created record"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/read/submissions?Instance=56358_wheres_the_line": {
+      "get": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Retrieve all records from submissions",
+        "description": "### Filtering\n\nYou can filter results by adding column-based query parameters directly to the URL.\nOperators use bracket notation:\n\n| Operator | Example | Meaning |\n|---|---|---|\n| `field=value` | `?status=active` | Equal (default) |\n| `field[ne]=value` | `?status[ne]=inactive` | Not equal |\n| `field[gt]=value` | `?price[gt]=100` | Greater than |\n| `field[gte]=value` | `?date[gte]=2024-05-01` | Greater than or equal |\n| `field[lt]=value` | `?score[lt]=500` | Less than |\n| `field[lte]=value` | `?score[lte]=800` | Less than or equal |\n| `field[in]=value` | `?type[in]=a,b,c` | In list (comma-separated) |\n| `field[like]=value` | `?name[like]=john` | Partial match |\n\n**Available columns:** `round_id`, `player_id`, `submitted_at`, `round_score_delta`, `card_text`\n\n**Example:**\n```\n?Instance={db_name}&status=active&price[gte]=100&price[lte]=500&sort=price&order=desc&page=1&limit=20\n```",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "query",
+            "name": "queryParams",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filters, pagination & sorting as key=value pairs separated by &. Example: status=active&page=2&limit=5&sort=name&order=asc. Available columns: round_id, player_id, submitted_at, round_score_delta, card_text"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "round_id": {
+                            "type": "integer"
+                          },
+                          "player_id": {
+                            "type": "integer"
+                          },
+                          "submitted_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2026-01-01 00:00:00"
+                          },
+                          "round_score_delta": {
+                            "type": "integer"
+                          },
+                          "card_text": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/read/submissions/{id}?Instance=56358_wheres_the_line": {
+      "get": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Retrieve a record by ID from submissions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the record to retrieve"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "round_id": {
+                          "type": "integer"
+                        },
+                        "player_id": {
+                          "type": "integer"
+                        },
+                        "submitted_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2026-01-01 00:00:00"
+                        },
+                        "round_score_delta": {
+                          "type": "integer"
+                        },
+                        "card_text": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Record Not Found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/search/submissions?Instance=56358_wheres_the_line": {
+      "post": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Search for records in submissions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "round_id": {
+                    "type": "integer"
+                  },
+                  "player_id": {
+                    "type": "integer"
+                  },
+                  "submitted_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2026-01-01 00:00:00"
+                  },
+                  "round_score_delta": {
+                    "type": "integer"
+                  },
+                  "card_text": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved matching records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "round_id": {
+                            "type": "integer"
+                          },
+                          "player_id": {
+                            "type": "integer"
+                          },
+                          "submitted_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2026-01-01 00:00:00"
+                          },
+                          "round_score_delta": {
+                            "type": "integer"
+                          },
+                          "card_text": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/update/submissions/{id}?Instance=56358_wheres_the_line": {
+      "put": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Update a record in submissions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the record to update"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "round_id": {
+                    "type": "integer"
+                  },
+                  "player_id": {
+                    "type": "integer"
+                  },
+                  "submitted_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2026-01-01 00:00:00"
+                  },
+                  "round_score_delta": {
+                    "type": "integer"
+                  },
+                  "card_text": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully updated the record"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/delete/submissions/{id}?Instance=56358_wheres_the_line": {
+      "delete": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Delete a record from submissions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the record to delete"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted the record"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Record Not Found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/bulk/create/submissions?Instance=56358_wheres_the_line": {
+      "post": {
+        "tags": [
+          "Bulk Endpoints"
+        ],
+        "summary": "Bulk create records in submissions (Max 500)",
+        "description": "### Bulk Create Guide\nInsert multiple records into the database with a single API call.\n\n- **Max Limit**: 500 records per request.\n- **Performance**: Highly recommended over looping single POST requests.\n\n**Response**: Returns an HTTP 207 Multi-Status with a summary and a per-record breakdown of successes and failures.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "records": {
+                    "type": "array",
+                    "description": "An array of objects to insert",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "round_id": {
+                          "type": "integer"
+                        },
+                        "player_id": {
+                          "type": "integer"
+                        },
+                        "submitted_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2026-01-01 00:00:00"
+                        },
+                        "round_score_delta": {
+                          "type": "integer"
+                        },
+                        "card_text": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "records": [
+                  {
+                    "round_id": 0,
+                    "player_id": 0,
+                    "submitted_at": "2026-01-01 00:00:00",
+                    "round_score_delta": 0,
+                    "card_text": "string"
+                  },
+                  {
+                    "round_id": 0,
+                    "player_id": 0,
+                    "submitted_at": "2026-01-01 00:00:00",
+                    "round_score_delta": 0,
+                    "card_text": "string"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "207": {
+            "description": "Multi-Status response indicating success/failure per record"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/bulk/update/submissions?Instance=56358_wheres_the_line": {
+      "put": {
+        "tags": [
+          "Bulk Endpoints"
+        ],
+        "summary": "Bulk update records in submissions (Max 500)",
+        "description": "### Bulk Update Guide\nUpdate multiple existing records simultaneously using a single transaction.\n\n- **Requirement**: Every object in the `records` array MUST include the primary key (`id`).\n- **Max Limit**: 500 records per request.\n- **Atomic**: Wraps updates in a transaction (all-or-nothing per database rules).",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "records": {
+                    "type": "array",
+                    "description": "An array of objects to update. Must include the primary key.",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "round_id": {
+                          "type": "integer"
+                        },
+                        "player_id": {
+                          "type": "integer"
+                        },
+                        "submitted_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2026-01-01 00:00:00"
+                        },
+                        "round_score_delta": {
+                          "type": "integer"
+                        },
+                        "card_text": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "records": [
+                  {
+                    "id": 0,
+                    "round_id": 0,
+                    "player_id": 0,
+                    "submitted_at": "2026-01-01 00:00:00",
+                    "round_score_delta": 0,
+                    "card_text": "string"
+                  },
+                  {
+                    "id": 0,
+                    "round_id": 0,
+                    "player_id": 0,
+                    "submitted_at": "2026-01-01 00:00:00",
+                    "round_score_delta": 0,
+                    "card_text": "string"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "207": {
+            "description": "Multi-Status response indicating success/failure per record"
+          },
+          "400": {
+            "description": "Bad Request (e.g. missing primary key)"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/bulk/delete/submissions?Instance=56358_wheres_the_line": {
+      "delete": {
+        "tags": [
+          "Bulk Endpoints"
+        ],
+        "summary": "Bulk delete records from submissions (Max 500)",
+        "description": "### Bulk Delete Guide\nDelete multiple records by providing the IDs of all the records you want to delete.\n\n- **Max Limit**: 500 IDs per request.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Instance"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "description": "An array of primary keys to delete",
+                    "items": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully processed bulk delete"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "parameters": {
+      "Instance": {
+        "name": "Instance",
+        "in": "query",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "default": "56358_wheres_the_line"
+        },
+        "description": "Instance Name"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Endpoints",
+      "description": "Operations related to the API endpoints"
+    },
+    {
+      "name": "Bulk Endpoints",
+      "description": "Operations for bulk record processing (Create, Update, Delete)"
+    },
+    {
+      "name": "Join Endpoints",
+      "description": "Operations related to table joins"
+    },
+    {
+      "name": "Storage",
+      "description": "File upload operations using Cloudflare R2"
+    }
+  ]
+}

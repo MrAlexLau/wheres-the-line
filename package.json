@@ -6,9 +6,11 @@
   "type": "module",
   "scripts": {
     "dev": "http-server . -p 8080 -c-1 -o",
-    "devl": "npm run dev"
+    "devl": "npm run dev",
+    "dev:mp": "netlify dev"
   },
   "devDependencies": {
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "netlify-cli": "^17.38.0"
   }
 }

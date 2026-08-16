@@ -64,21 +64,24 @@ extremes, not just whoever can write the funniest card.
    turn:
    - Interstitial: "Pass the device to <Player>."
    - That player sees the Condition and a large, high-contrast **criteria
-     callout** stating exactly what to look for given this round's Goal
-     (e.g. "Play the MOST extreme thing you think <Judge> would actually
-     agree to do…") before they view their hand and tap one Action card to
-     submit face-down. The card leaves their hand.
+     callout** — "Goal: Submit an action the judge <u>WOULD</u> do" /
+     "<u>WOULD NOT</u> do" / either, depending on this round's Goal — before
+     they view their hand and tap one Action card to submit face-down. The
+     card leaves their hand.
    - Screen advances to the next submitting player. The judge does not
      submit a card.
 3. **Judging.** Device passes back to the judge. All submitted actions are
-   shown shuffled and anonymized (no player names attached), sorted into
-   two labeled, drag-and-drop buckets: **"✅ Would do"** on top and
-   **"🚫 Wouldn't do"** below. The judge:
-   - Drags each card into whichever bucket it belongs in.
+   shown shuffled and anonymized (no player names attached), starting in a
+   dashed, neutral **"🤔 Not sorted yet"** pile between two labeled
+   drag-and-drop buckets: **"✅ Would do"** above it and **"🚫 Wouldn't do"**
+   below it. The judge:
+   - Drags each card out of the neutral pile into whichever bucket it
+     belongs in. **Judging can't be confirmed until the neutral pile is
+     empty** — every card must be sorted one way or the other.
    - Drags within a bucket to order cards by how extreme they are — the
-     card nearest the divide in each bucket is the one that counts.
+     card nearest the middle in each bucket is the one that counts.
    - Either bucket may end up empty (they wouldn't do any of them, or
-     they'd do all of them).
+     they'd do all of them) once everything is sorted.
    The bottom-most card in "Would do" is **the MOST** pick; the top-most
    card in "Wouldn't do" is **the LEAST** pick. Either pick is simply
    absent when its bucket is empty.
@@ -102,17 +105,16 @@ extremes, not just whoever can write the funniest card.
 Each round is randomly assigned one of these Goals, shown to the table
 alongside the Condition card:
 
-| Goal | Who scores (+1) | Who's penalized (-1) | Eligibility |
-|---|---|---|---|
-| **Most likely to do** | MOST pick (card just above the line) | LEAST pick — the closest card that still landed on the "wouldn't do" side | Always available |
-| **Least likely to do** | LEAST pick (card just below the line) | MOST pick — the closest card that still landed on the "would do" side | Always available |
-| **Anything in between scores** | Both the MOST and LEAST picks | Nobody | Only offered when there are **3+ submitters (4+ total players)** |
+| Goal | Who scores (+1) | Eligibility |
+|---|---|---|
+| **Most likely to do** | MOST pick (card just above the line) | Always available |
+| **Least likely to do** | LEAST pick (card just below the line) | Always available |
+| **Anything in between scores** | Both the MOST and LEAST picks | Only offered when there are **3+ submitters (4+ total players)** |
 
-A player's score never drops below 0 from a penalty. Submitters are told
-the active Goal (and what to look for) before they pick a card, since it
-changes the right answer: in a "most" round, playing something too tame
-risks landing on the wrong side of the line and losing a point instead of
-just failing to score.
+Landing on the wrong side of the line simply scores nothing — there's no
+penalty. Submitters are told the active Goal before they pick a card, since
+it changes the right answer: in a "most" round you're aiming for something
+the judge would actually do; too tame and it just won't score.
 
 The "in between" goal is excluded below 4 players because with only 2
 submitters, the line has nowhere else to go — MOST and LEAST are always

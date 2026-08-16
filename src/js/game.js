@@ -119,21 +119,17 @@ export class Game {
     this.roundGoal = pickRoundGoal(this.submitOrder.length);
 
     /**
-     * Ordering the judge is building during JUDGING: playerIds sorted from
-     * "most likely to do" (index 0) to "least likely to do" (last index).
-     * Anonymized — the judge only sees card text, not names, while sorting.
+     * The three piles the judge sorts submissions into during JUDGING, each
+     * holding playerIds (anonymized — the judge only sees card text, not
+     * names). `wouldIds` and `wouldntIds` are ordered nearest-the-divide-last
+     * / nearest-the-divide-first respectively, so the boundary cards are
+     * always wouldIds[last] and wouldntIds[0]. Everything starts in
+     * `neutralIds`; judging can't be confirmed until it's empty.
      */
-    this.orderedIds = [];
-    /**
-     * Index of the dividing line within orderedIds: cards at indices
-     * [0, linePosition) are on the "would do" side, cards at
-     * [linePosition, length) are on the "wouldn't do" side. Can sit at
-     * either end (0 or orderedIds.length) when the judge decides every card
-     * — or none of them — clears their line.
-     */
-    this.linePosition = 0;
+    this.neutralIds = [];
+    this.wouldIds = [];
+    this.wouldntIds = [];
     this.winners = [];
-    this.losers = [];
   }
 
   dealUpToHandSize(player) {
@@ -181,94 +177,86 @@ export class Game {
 
   beginJudging() {
     this.phase = PHASES.JUDGING;
-    this.orderedIds = shuffle(this.submissions.map((s) => s.playerId));
-    this.linePosition = Math.floor(this.orderedIds.length / 2);
+    this.neutralIds = shuffle(this.submissions.map((s) => s.playerId));
+    this.wouldIds = [];
+    this.wouldntIds = [];
   }
 
-  /** Current judging order as {playerId, card} pairs, most-likely first. */
-  orderedSubmissions() {
-    return this.orderedIds.map((playerId) => ({
-      playerId,
-      card: this.submissions.find((s) => s.playerId === playerId).card,
-    }));
+  /** This round's submissions as {playerId, card} pairs. */
+  allSubmissions() {
+    return this.submissions;
+  }
+
+  /** Look up a submission's card text by playerId. */
+  cardFor(playerId) {
+    return this.submissions.find((s) => s.playerId === playerId)?.card ?? null;
   }
 
   /**
-   * Set the full judging order and line position in one go — used by the
-   * drag-to-sort UI, which resolves both the card order and the line's slot
-   * from a single drop. `orderedIds` must be a permutation of this round's
-   * submitting playerIds; `linePosition` may sit anywhere from 0 (line
-   * above every card — the judge wouldn't do any of them) to
-   * `orderedIds.length` (line below every card — they'd do all of them).
+   * Set all three piles in one go — used by the drag-to-sort UI, which
+   * resolves the judge's full arrangement from a single drop. The union of
+   * all three arrays must be exactly a permutation of this round's
+   * submitting playerIds.
    */
-  applyOrder(orderedIds, linePosition) {
+  applyBuckets(wouldIds, wouldntIds, neutralIds) {
     if (this.phase !== PHASES.JUDGING) return;
     const expected = new Set(this.submissions.map((s) => s.playerId));
-    const isPermutation =
-      orderedIds.length === expected.size && orderedIds.every((id) => expected.has(id));
+    const combined = [...wouldIds, ...wouldntIds, ...neutralIds];
+    const isPermutation = combined.length === expected.size && combined.every((id) => expected.has(id));
     if (!isPermutation) {
-      throw new Error("orderedIds must be a permutation of this round's submissions.");
+      throw new Error("Buckets together must be a permutation of this round's submissions.");
     }
-    this.orderedIds = orderedIds.slice();
-    this.linePosition = Math.min(Math.max(linePosition, 0), orderedIds.length);
+    this.wouldIds = wouldIds.slice();
+    this.wouldntIds = wouldntIds.slice();
+    this.neutralIds = neutralIds.slice();
   }
 
-  /** playerId whose submission is immediately above the line ("the MOST"). */
+  /** playerId whose submission is closest to the divide on the "would do" side ("the MOST"). */
   get mostPick() {
-    return this.orderedIds[this.linePosition - 1] ?? null;
+    return this.wouldIds[this.wouldIds.length - 1] ?? null;
   }
 
-  /** playerId whose submission is immediately below the line ("the LEAST"). */
+  /** playerId whose submission is closest to the divide on the "wouldn't do" side ("the LEAST"). */
   get leastPick() {
-    return this.orderedIds[this.linePosition] ?? null;
+    return this.wouldntIds[0] ?? null;
   }
 
   /**
-   * What would happen if judging were confirmed right now, given the round's
-   * goal: `scorers` gain a point, `losers` lose one.
-   *
-   * - MOST: the card just above the line (mostPick) scores; the card just
-   *   below it (leastPick) — the closest one that landed on the "wouldn't
-   *   do" side — loses a point.
-   * - LEAST: the card just below the line (leastPick) scores; the card just
-   *   above it (mostPick) — the closest one that landed on the "would do"
-   *   side — loses a point.
-   * - BETWEEN: both mostPick and leastPick score; nobody loses a point.
+   * playerIds that would score a point if judging were confirmed right now,
+   * given the round's goal:
+   * - MOST: just the card just above the line (mostPick).
+   * - LEAST: just the card just below the line (leastPick).
+   * - BETWEEN: both mostPick and leastPick.
+   * Landing on the wrong side of the line simply scores nothing — there's
+   * no penalty.
    */
-  pendingOutcome() {
+  pendingWinners() {
     const scorers = [];
-    const losers = [];
     if (this.roundGoal === ROUND_GOALS.MOST) {
       if (this.mostPick) scorers.push(this.mostPick);
-      if (this.leastPick) losers.push(this.leastPick);
     } else if (this.roundGoal === ROUND_GOALS.LEAST) {
       if (this.leastPick) scorers.push(this.leastPick);
-      if (this.mostPick) losers.push(this.mostPick);
     } else {
       if (this.mostPick) scorers.push(this.mostPick);
       if (this.leastPick) scorers.push(this.leastPick);
     }
-    return { scorers, losers };
+    return scorers;
   }
 
+  /** Judging can't be confirmed until every card has been sorted out of the neutral pile. */
   canConfirmJudging() {
-    return this.phase === PHASES.JUDGING;
+    return this.phase === PHASES.JUDGING && this.neutralIds.length === 0;
   }
 
   confirmJudging() {
     if (!this.canConfirmJudging()) {
       throw new Error("Not currently judging.");
     }
-    const { scorers, losers } = this.pendingOutcome();
+    const scorers = this.pendingWinners();
     for (const id of scorers) {
       this.players.find((p) => p.id === id).score += 1;
     }
-    for (const id of losers) {
-      const player = this.players.find((p) => p.id === id);
-      player.score = Math.max(0, player.score - 1);
-    }
     this.winners = scorers;
-    this.losers = losers;
 
     for (const { card } of this.submissions) {
       this.actionDeck.discard(card);
@@ -305,9 +293,9 @@ export class Game {
     this.judgeIndex = (this.judgeIndex + 1) % this.players.length;
     this.condition = this.conditionDeck.draw();
     this.submissions = [];
-    this.orderedIds = [];
-    this.linePosition = 0;
-    this.losers = [];
+    this.neutralIds = [];
+    this.wouldIds = [];
+    this.wouldntIds = [];
     this.submitOrder = this.nonJudgePlayers().map((p) => p.id);
     this.submitCursor = 0;
     this.roundGoal = pickRoundGoal(this.submitOrder.length);
