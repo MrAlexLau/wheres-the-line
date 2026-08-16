@@ -1,7 +1,7 @@
 <script>
-  import { round, judgingSlots, submissions, isJudge, judgeName, uiBusy } from "../stores.js";
+  import { round, judgingSlots, submissions, isJudge, judgeName, uiBusy, uiError } from "../stores.js";
   import { sameId } from "../ids.js";
-  import { applyBucketsAction, confirmJudgingAction } from "../client.js";
+  import { applyBucketsAction, confirmSplitAction } from "../client.js";
   import { dragSort } from "../dragSort.js";
 
   $: cardText = (submissionId) => $submissions.find((s) => sameId(s.id, submissionId))?.card_text ?? "";
@@ -39,13 +39,13 @@
 <div class="card condition">{$round.condition_card_text}</div>
 
 {#if $isJudge}
-  <h2>Where's the line?</h2>
+  <h2>Step 1: Would you do it?</h2>
   <p class="subtitle">
-    Sort into <strong>Would do</strong> / <strong>Wouldn't do</strong>, ordering "Would do" from easiest (top) to most
-    extreme (bottom). <strong>The bottom card in "Would do" wins</strong> — the least likely thing you'd still do.
+    Sort every card into <strong>Would do</strong> or <strong>Wouldn't do</strong>. You need at least one in
+    "Would do" to continue — you'll rank those next.
   </p>
 {:else}
-  <p class="subtitle">{$judgeName} is deciding where the line is — the winning card is whichever one ends up at the bottom of "Would do."</p>
+  <p class="subtitle">{$judgeName} is sorting what they would and wouldn't do…</p>
 {/if}
 
 <div
@@ -58,15 +58,12 @@
   }}
 >
   <div class="bucket would-bucket">
-    <div class="bucket-header would-header">✅ Would do <span class="bucket-hint">(top = easy, bottom = your limit)</span></div>
+    <div class="bucket-header would-header">✅ Would do</div>
     <div class="bucket-cards">
-      {#each frozenWould as s, i (s.id)}
+      {#each frozenWould as s (s.id)}
         <div class="order-row card-row" data-sort-key={`slot:${s.id}`}>
           {#if $isJudge}<span class="drag-handle" aria-hidden="true">⠿</span>{/if}
           <div class="card action order-card">{cardText(s.submission_id)}</div>
-          {#if i === frozenWould.length - 1}
-            <span class="winner-badge">🏆 wins</span>
-          {/if}
         </div>
       {/each}
     </div>
@@ -96,7 +93,15 @@
 </div>
 
 {#if $isJudge}
-  <button class="btn-primary" disabled={frozenNeutral.length > 0 || $uiBusy} on:click={confirmJudgingAction}>
-    Confirm
+  <button
+    class="btn-primary"
+    disabled={frozenNeutral.length > 0 || frozenWould.length === 0 || $uiBusy}
+    on:click={confirmSplitAction}
+  >
+    Next: Rank your "Would do" cards
   </button>
+  {#if frozenNeutral.length === 0 && frozenWould.length === 0}
+    <p class="subtitle">You need at least one "Would do" card to continue.</p>
+  {/if}
+  <div class="error-text">{$uiError}</div>
 {/if}

@@ -308,6 +308,32 @@ export async function applyBucketsAction(wouldIds, wouldntIds, neutralIds) {
   patchJudgingSlots(wouldIds, wouldntIds, neutralIds);
 }
 
+// Step 1 -> step 2: lock in the Would/Wouldn't split.
+export function confirmSplitAction() {
+  return runRoomAction(() => engine.confirmSplit(get(round), get(judgingSlots)));
+}
+
+// Same "patch immediately + reapply after refresh" pattern as
+// patchJudgingSlots above, for step 2's easiest-to-hardest reordering
+// (positions only — bucket never changes in this step).
+function patchJudgingOrder(orderedIds) {
+  judgingSlots.update((slots) => {
+    const byId = new Map(slots.map((s) => [String(s.id), { ...s }]));
+    orderedIds.forEach((id, i) => {
+      const s = byId.get(String(id));
+      if (s) s.position = i;
+    });
+    return [...byId.values()];
+  });
+}
+
+export async function applyOrderAction(orderedIds) {
+  await engine.applyOrder(orderedIds);
+  patchJudgingOrder(orderedIds);
+  await refresh();
+  patchJudgingOrder(orderedIds);
+}
+
 export function confirmJudgingAction() {
   return runRoomAction(() => engine.confirmJudging(get(room), get(round), get(submissions), get(judgingSlots), get(players)));
 }

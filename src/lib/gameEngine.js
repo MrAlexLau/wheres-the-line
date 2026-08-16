@@ -294,13 +294,38 @@ async function dedupeJudgingSlots(roundId) {
   );
 }
 
-/** Judge-only: persists a full bucket rearrangement from the drag-sort UI. */
+/** Judge-only: persists a full bucket rearrangement from the drag-sort UI (step 1). */
 export async function applyBuckets(wouldOrder, wouldntOrder, neutralOrder) {
   const writes = [];
   wouldOrder.forEach((slotId, i) => writes.push(api.update("judging_slots", slotId, { bucket: "WOULD", position: i })));
   wouldntOrder.forEach((slotId, i) => writes.push(api.update("judging_slots", slotId, { bucket: "WOULDNT", position: i })));
   neutralOrder.forEach((slotId) => writes.push(api.update("judging_slots", slotId, { bucket: "NEUTRAL", position: null })));
   await Promise.all(writes);
+}
+
+/**
+ * Judge-only: locks in the step-1 Would/Wouldn't split and moves to step 2
+ * (ranking the Would cards easiest-to-hardest). Requires at least one card
+ * in "Would do" — otherwise there's nothing to rank and no winner possible.
+ *
+ * There's no separate "ORDERING" phase — rounds.phase is a real MySQL enum
+ * with a fixed set of values (confirmed empirically: writing an
+ * unrecognized value throws "Data truncated for column 'phase'"), so a new
+ * phase isn't available without a schema change. Instead this repurposes
+ * confirmed_at (otherwise only set once, at the final confirmJudging) as
+ * the step-1-done marker: phase stays "JUDGING" for both steps, and
+ * `!round.confirmed_at` vs `round.confirmed_at` is what the client uses to
+ * tell step 1 from step 2 — see client.js/Round.svelte.
+ */
+export async function confirmSplit(round, judgingSlots) {
+  const wouldCount = judgingSlots.filter((s) => s.bucket === "WOULD").length;
+  if (wouldCount === 0) throw new Error('You need at least one card in "Would do" before continuing.');
+  await api.update("rounds", round.id, { confirmed_at: ncbDatetime() });
+}
+
+/** Judge-only: persists the step-2 easiest(first)-to-hardest(last) order of the Would cards. */
+export async function applyOrder(orderedSlotIds) {
+  await Promise.all(orderedSlotIds.map((slotId, i) => api.update("judging_slots", slotId, { position: i })));
 }
 
 /** Judge-only: scores the round, discards played cards, refills hands, advances to REVEAL. */

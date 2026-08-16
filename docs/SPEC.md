@@ -179,6 +179,25 @@ the shared room or remove other players.
 All NocodeBackend datetime writes use `YYYY-MM-DD HH:mm:ss`, matching the
 database's MySQL datetime columns rather than JavaScript's ISO-8601 format.
 
+**Judging is two steps.** Scoring is a single fixed rule: the winner is the
+least likely thing the judge would still do. The judge reaches that in two
+steps, both while `round.phase` stays `"JUDGING"`:
+
+1. **Split.** Sort every submission into "Would do" / "Wouldn't do." At
+   least one card must land in "Would do" to continue.
+2. **Rank.** Order only the "Would do" cards from easiest (top) to hardest
+   (bottom). The bottom card wins — shown live with a 🏆 badge as the judge
+   drags.
+
+There's no separate phase enum value for step 2 — `rounds.phase` is a real
+MySQL enum with a fixed value set (confirmed empirically: writing anything
+else throws "Data truncated for column 'phase'"), so introducing an
+`"ORDERING"` phase isn't possible without a schema change. Instead
+`rounds.confirmed_at` — otherwise only ever set once, at the final
+confirm — is repurposed as the step-1-done marker: `!round.confirmed_at`
+means step 1 (split), `round.confirmed_at` truthy means step 2 (rank). See
+`Round.svelte` and `gameEngine.js`'s `confirmSplit`/`confirmJudging`.
+
 ### 8a. Database Schema
 
 Six tables, all with an auto-incrementing integer `id` primary key. Generated
