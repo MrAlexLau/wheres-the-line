@@ -64,7 +64,7 @@ function unmount() {
 // ---------- data refresh ----------
 
 async function refreshAndRender() {
-  const before = stateSnapshot();
+  const before = snapshotParts();
   try {
     const hasRoom = await refresh();
     if (!hasRoom) return;
@@ -72,10 +72,22 @@ async function refreshAndRender() {
   } catch (err) {
     state.ui.error = err.message;
   }
+  const after = snapshotParts();
   // Polling happens every two seconds. Replacing the entire DOM when the
   // shared game state is unchanged makes the lobby visibly flash (and can
   // interrupt typing), so only render when the snapshot actually changed.
-  if (before !== stateSnapshot()) render(false);
+  const changedKeys = Object.keys(before).filter((k) => before[k] !== after[k]);
+  if (changedKeys.length > 0) {
+    // Temporary diagnostic: pinpoints exactly which part of state a poll
+    // thought had changed, since a full-screen re-render on every 2s poll
+    // was reported as constant flickering even after normalizing known
+    // type-serialization mismatches. Safe to remove once that's root-caused.
+    console.log("[wtl] poll-triggered re-render, changed:", changedKeys, {
+      before: Object.fromEntries(changedKeys.map((k) => [k, before[k]])),
+      after: Object.fromEntries(changedKeys.map((k) => [k, after[k]])),
+    });
+    render(false);
+  }
 }
 
 async function refresh() {
@@ -320,7 +332,10 @@ function normalizeField(value) {
   return value;
 }
 
-function stateSnapshot() {
+// Keyed per top-level piece of state (rather than one big string) so a
+// changed poll can report *which* piece changed instead of just that
+// something did.
+function snapshotParts() {
   const pick = (row, fields) =>
     row ? fields.reduce((out, field) => ({ ...out, [field]: normalizeField(row[field]) }), {}) : null;
   const sorted = (rows, fields) =>
@@ -328,16 +343,18 @@ function stateSnapshot() {
       .map((row) => pick(row, fields))
       .sort((a, b) => String(a.id ?? "").localeCompare(String(b.id ?? "")));
 
-  return JSON.stringify({
+  return {
     screen: state.screen,
-    room: pick(state.room, ["id", "room_code", "status", "target_score", "hand_size", "current_round_number", "current_phase"]),
-    players: sorted(state.players, ["id", "display_name", "join_order", "is_host", "score"]),
-    round: pick(state.round, ["id", "round_number", "phase", "judge_player_id", "condition_card_text", "round_goal"]),
-    submissions: sorted(state.submissions, ["id", "player_id", "card_text", "submitted_at", "round_score_delta"]),
-    judgingSlots: sorted(state.judgingSlots, ["id", "submission_id", "bucket", "position"]),
-    myHand: sorted(state.myHand, ["id", "card_text"]),
+    room: JSON.stringify(
+      pick(state.room, ["id", "room_code", "status", "target_score", "hand_size", "current_round_number", "current_phase"])
+    ),
+    players: JSON.stringify(sorted(state.players, ["id", "display_name", "join_order", "is_host", "score"])),
+    round: JSON.stringify(pick(state.round, ["id", "round_number", "phase", "judge_player_id", "condition_card_text", "round_goal"])),
+    submissions: JSON.stringify(sorted(state.submissions, ["id", "player_id", "card_text", "submitted_at", "round_score_delta"])),
+    judgingSlots: JSON.stringify(sorted(state.judgingSlots, ["id", "submission_id", "bucket", "position"])),
+    myHand: JSON.stringify(sorted(state.myHand, ["id", "card_text"])),
     error: state.ui.error,
-  });
+  };
 }
 
 function renderHostSetup() {
