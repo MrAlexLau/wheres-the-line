@@ -69,7 +69,7 @@ async function refreshAndRender() {
   // Polling happens every two seconds. Replacing the entire DOM when the
   // shared game state is unchanged makes the lobby visibly flash (and can
   // interrupt typing), so only render when the snapshot actually changed.
-  if (before !== stateSnapshot()) render();
+  if (before !== stateSnapshot()) render(false);
 }
 
 async function refresh() {
@@ -222,31 +222,45 @@ async function runRoomAction(action) {
 
 // ---------- render ----------
 
-function render() {
+function render(animate = true) {
   root.innerHTML = "";
+  let view;
   switch (state.screen) {
     case "host-setup":
-      return root.appendChild(renderHostSetup());
+      view = renderHostSetup();
+      break;
     case "join":
-      return root.appendChild(renderJoin());
+      view = renderJoin();
+      break;
     case "lobby":
-      return root.appendChild(renderLobby());
+      view = renderLobby();
+      break;
     case "in-round":
-      return root.appendChild(renderRound());
+      view = renderRound();
+      break;
     default:
-      return root.appendChild(el("div", { text: "Unknown screen." }));
+      view = el("div", { text: "Unknown screen." });
   }
+  if (!animate && view.classList.contains("screen")) view.classList.add("no-animation");
+  root.appendChild(view);
 }
 
 function stateSnapshot() {
+  const pick = (row, fields) =>
+    row ? fields.reduce((out, field) => ({ ...out, [field]: row[field] }), {}) : null;
+  const sorted = (rows, fields) =>
+    rows
+      .map((row) => pick(row, fields))
+      .sort((a, b) => String(a.id ?? "").localeCompare(String(b.id ?? "")));
+
   return JSON.stringify({
     screen: state.screen,
-    room: state.room,
-    players: state.players,
-    round: state.round,
-    submissions: state.submissions,
-    judgingSlots: state.judgingSlots,
-    myHand: state.myHand,
+    room: pick(state.room, ["id", "room_code", "status", "target_score", "hand_size", "current_round_number", "current_phase"]),
+    players: sorted(state.players, ["id", "display_name", "join_order", "is_host", "score"]),
+    round: pick(state.round, ["id", "round_number", "phase", "judge_player_id", "condition_card_text", "round_goal"]),
+    submissions: sorted(state.submissions, ["id", "player_id", "card_text", "submitted_at", "round_score_delta"]),
+    judgingSlots: sorted(state.judgingSlots, ["id", "submission_id", "bucket", "position"]),
+    myHand: sorted(state.myHand, ["id", "card_text"]),
     error: state.ui.error,
   });
 }

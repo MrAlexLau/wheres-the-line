@@ -117,7 +117,7 @@ export async function submitCard(room, roundId, submissionId, playerId, card) {
   const [deckRow] = await api.read("deck_cards", { room_id: room.id, holder_player_id: playerId, card_text: card, status: "IN_HAND", limit: 1 });
   if (!deckRow) throw new Error("That card isn't in your hand anymore.");
   await api.update("deck_cards", deckRow.id, { status: "DISCARDED", holder_player_id: null });
-  await api.update("submissions", submissionId, { card_text: card, submitted_at: new Date().toISOString() });
+  await api.update("submissions", submissionId, { card_text: card, submitted_at: ncbDatetime() });
 
   const allSubmissions = await api.read("submissions", { round_id: roundId });
   if (allSubmissions.every((s) => s.submitted_at)) {
@@ -179,7 +179,7 @@ export async function confirmJudging(room, round, submissions, judgingSlots, pla
     await dealUpToHandSize(room.id, submission.player_id, room.hand_size);
   }
 
-  await api.update("rounds", round.id, { phase: "REVEAL", confirmed_at: new Date().toISOString() });
+  await api.update("rounds", round.id, { phase: "REVEAL", confirmed_at: ncbDatetime() });
   await api.update("rooms", room.id, { current_phase: "REVEAL" });
 }
 
@@ -195,4 +195,10 @@ export async function nextRound(room, round, players) {
   const currentJudgeIdx = orderedByJoin.findIndex((p) => p.id === round.judge_player_id);
   const nextJudge = orderedByJoin[(currentJudgeIdx + 1) % orderedByJoin.length];
   await createRound(room, players, room.current_round_number + 1, nextJudge);
+}
+
+// NocodeBackend's MySQL datetime columns expect `YYYY-MM-DD HH:mm:ss`, not
+// the ISO-8601 `T...Z` representation returned by Date#toISOString().
+function ncbDatetime(date = new Date()) {
+  return date.toISOString().slice(0, 19).replace("T", " ");
 }
