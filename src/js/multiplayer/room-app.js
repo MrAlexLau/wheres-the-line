@@ -12,6 +12,9 @@ import * as engine from "./host-engine.js";
 let root = null;
 let onExit = null;
 let pollHandle = null;
+// Per-round dedup guards for the self-heal checks in refresh() — see there.
+let healedSubmissionRounds = new Set();
+let healedHandRounds = new Set();
 
 let state = {
   screen: "host-setup", // host-setup | join | lobby | in-round
@@ -43,6 +46,8 @@ export function mountRoomApp(container, initialScreen, exitCallback) {
     myHand: [],
     ui: { revealed: false, busy: false, error: "" },
   };
+  healedSubmissionRounds = new Set();
+  healedHandRounds = new Set();
   if (existing) refreshAndRender();
   else render();
   clearInterval(pollHandle);
@@ -111,9 +116,15 @@ async function refresh() {
       if (round.phase === "SUBMITTING" && !sameId(round.judge_player_id, playerId)) {
         // Self-heal a missing submission row (e.g. the round-start
         // bulk-create silently dropped one record) — without it this
-        // player could never actually submit.
-        const mySub = await engine.ensureSubmissionRow(round.id, playerId, state.submissions);
-        if (!state.submissions.some((s) => sameId(s.player_id, playerId))) {
+        // player could never actually submit. Guarded to run once per round:
+        // it's cheap to check every poll, but only ever needs to *write*
+        // once, and re-checking a count-based condition every 2s risks
+        // reacting to a momentarily-inconsistent read rather than a real gap
+        // (which would otherwise keep dealing extra cards forever).
+        let mySub = state.submissions.find((s) => sameId(s.player_id, playerId));
+        if (!mySub && !healedSubmissionRounds.has(round.id)) {
+          healedSubmissionRounds.add(round.id);
+          mySub = await engine.ensureSubmissionRow(round.id, playerId, state.submissions);
           state.submissions = [...state.submissions, mySub];
         }
 
@@ -123,10 +134,13 @@ async function refresh() {
           status: "IN_HAND",
           holder_player_id: playerId,
         });
-        // Self-heal a short/empty hand (e.g. a dealt card that never landed,
-        // or a late joiner who missed the initial deal). No-ops if the
-        // player already has enough cards.
-        if (state.myHand.length < room.hand_size && !mySub.submitted_at) {
+        // Self-heal a genuinely empty hand (e.g. a late joiner who missed
+        // the initial deal). Only fires once per round, and only for a
+        // hard-zero hand — not merely "fewer than hand_size" — so a
+        // momentarily-short read of an otherwise-fine hand can't trigger a
+        // repeated top-up loop.
+        if (state.myHand.length === 0 && mySub && !mySub.submitted_at && !healedHandRounds.has(round.id)) {
+          healedHandRounds.add(round.id);
           await engine.dealUpToHandSize(roomId, playerId, room.hand_size);
           state.myHand = await api.read("deck_cards", {
             room_id: roomId,
@@ -243,14 +257,23 @@ function leaveRoom() {
   onExit();
 }
 
-async function runRoomAction(action) {
+// `optimisticPatch(result)`, when given, is applied to local state right
+// after a successful write and again after the follow-up refresh() — the
+// second application matters because refresh()'s read isn't guaranteed to
+// reflect the write we just made (no read-after-write guarantee from the
+// backend), which otherwise let a stale read silently overwrite what we
+// already know just happened (e.g. submitting a card not immediately
+// showing as submitted).
+async function runRoomAction(action, { optimisticPatch } = {}) {
   if (state.ui.busy) return;
   state.ui.busy = true;
   state.ui.error = "";
   render();
   try {
-    await action();
+    const result = await action();
+    if (optimisticPatch) optimisticPatch(result);
     await refresh();
+    if (optimisticPatch) optimisticPatch(result);
   } catch (err) {
     state.ui.error = err.message;
   } finally {
@@ -562,7 +585,15 @@ function renderSubmitting() {
         text: row.card_text,
         onclick: async () => {
           if (!mySubmission) return;
-          await runRoomAction(() => engine.submitCard(state.room, state.round.id, mySubmission.id, me().id, row.card_text));
+          const submissionId = mySubmission.id;
+          const card = row.card_text;
+          await runRoomAction(() => engine.submitCard(state.room, state.round.id, submissionId, me().id, card), {
+            optimisticPatch: (submittedAt) => {
+              state.submissions = state.submissions.map((s) =>
+                sameId(s.id, submissionId) ? { ...s, card_text: card, submitted_at: s.submitted_at || submittedAt } : s
+              );
+            },
+          });
         },
       })
     );
@@ -586,7 +617,7 @@ function renderJudging() {
     el("p", { class: "subtitle", text: "Drag every card out of the middle pile into a bucket, ordering by how extreme it is." })
   );
 
-  const cardText = (submissionId) => state.submissions.find((s) => s.id === submissionId)?.card_text ?? "";
+  const cardText = (submissionId) => state.submissions.find((s) => sameId(s.id, submissionId))?.card_text ?? "";
   const slotsFor = (bucket) =>
     state.judgingSlots.filter((s) => s.bucket === bucket).sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
 

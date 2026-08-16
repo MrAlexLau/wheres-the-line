@@ -147,12 +147,13 @@ export async function startSubmissions(room, round) {
   await api.update("rooms", room.id, { current_phase: "SUBMITTING" });
 }
 
-/** Player-only: plays one card from their hand. */
+/** Player-only: plays one card from their hand. Returns the submitted_at timestamp actually written. */
 export async function submitCard(room, roundId, submissionId, playerId, card) {
   const [deckRow] = await api.read("deck_cards", { room_id: room.id, holder_player_id: playerId, card_text: card, status: "IN_HAND", limit: 1 });
   if (!deckRow) throw new Error("That card isn't in your hand anymore.");
   await api.update("deck_cards", deckRow.id, { status: "DISCARDED", holder_player_id: null });
-  await api.update("submissions", submissionId, { card_text: card, submitted_at: ncbDatetime() });
+  const submittedAt = ncbDatetime();
+  await api.update("submissions", submissionId, { card_text: card, submitted_at: submittedAt });
 
   const allSubmissions = await api.read("submissions", { round_id: roundId });
   // The row we just wrote to `submissions` may not be reflected in this
@@ -160,10 +161,11 @@ export async function submitCard(room, roundId, submissionId, playerId, card) {
   // everyone on the "waiting" screen forever. We know our own submission
   // went through, so treat it as submitted regardless of what this read
   // says.
-  const withOwnWrite = allSubmissions.map((s) => (sameId(s.id, submissionId) ? { ...s, submitted_at: s.submitted_at || ncbDatetime() } : s));
+  const withOwnWrite = allSubmissions.map((s) => (sameId(s.id, submissionId) ? { ...s, submitted_at: s.submitted_at || submittedAt } : s));
   if (withOwnWrite.every((s) => s.submitted_at)) {
     await beginJudging(room, roundId, withOwnWrite);
   }
+  return submittedAt;
 }
 
 async function beginJudging(room, roundId, submissions) {
@@ -206,7 +208,7 @@ export async function confirmJudging(room, round, submissions, judgingSlots, pla
 
   const writes = [];
   for (const s of submissions) {
-    const scored = scorerSubmissionIds.includes(s.id);
+    const scored = scorerSubmissionIds.some((id) => sameId(id, s.id));
     writes.push(api.update("submissions", s.id, { round_score_delta: scored ? 1 : 0 }));
     if (scored) {
       const player = players.find((p) => sameId(p.id, s.player_id));
