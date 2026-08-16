@@ -23,8 +23,16 @@
     frozenWouldnt = slotsFor("WOULDNT");
   }
 
-  function handleDrop(wouldIds, neutralIds, wouldntIds) {
-    applyBucketsAction(wouldIds, wouldntIds, neutralIds);
+  // Stays frozen (dragSort.js has already put the DOM back to matching the
+  // still-frozen pre-drop snapshot) until the write actually lands and the
+  // store holds the corrected arrangement — then unfreezes once, straight
+  // to the correct state, so Svelte performs the cross-bucket DOM move
+  // itself instead of reconciling on top of this action's own manual
+  // move. See dragSort.js for why doing it the other way around doubled
+  // cards.
+  async function handleDrop(wouldIds, neutralIds, wouldntIds) {
+    await applyBucketsAction(wouldIds, wouldntIds, neutralIds);
+    dragging = false;
   }
 </script>
 
@@ -43,8 +51,7 @@
   use:dragSort={{
     onDrop: handleDrop,
     onDragStart: () => (dragging = true),
-    onDragEnd: () => (dragging = false),
-    enabled: $isJudge,
+    enabled: $isJudge && !dragging,
   }}
 >
   <div class="bucket would-bucket">
