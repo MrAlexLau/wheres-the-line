@@ -50,7 +50,13 @@ async function drawCondition(roomId) {
   return row.card_text;
 }
 
-async function dealUpToHandSize(roomId, playerId, handSize) {
+/**
+ * Exported so a player's own device can self-heal a short hand — e.g. if a
+ * dealt card never landed (a partial bulk-create, or a late joiner who
+ * missed the initial deal at game start). A no-op if they already have
+ * enough cards.
+ */
+export async function dealUpToHandSize(roomId, playerId, handSize) {
   const held = await api.read("deck_cards", { room_id: roomId, deck_type: "ACTION", status: "IN_HAND", holder_player_id: playerId, limit: 500 });
   let need = handSize - held.length;
   if (need <= 0) return;
@@ -80,6 +86,19 @@ function sameId(a, b) {
   return a !== null && a !== undefined && b !== null && b !== undefined && String(a) === String(b);
 }
 
+/**
+ * Self-heal: if this player is missing their round's submission row (e.g.
+ * the bulk-create at round start silently dropped one record), create it.
+ * A no-op if the row already exists. Returns the (possibly newly created)
+ * submission row.
+ */
+export async function ensureSubmissionRow(roundId, playerId, existingSubmissions) {
+  const existing = existingSubmissions.find((s) => sameId(s.player_id, playerId));
+  if (existing) return existing;
+  const id = await api.create("submissions", { round_id: roundId, player_id: playerId });
+  return { id, round_id: roundId, player_id: playerId, submitted_at: null, card_text: null };
+}
+
 async function createRound(room, players, roundNumber, judgePlayer) {
   const nonJudge = players.filter((p) => !sameId(p.id, judgePlayer.id));
   const condition = await drawCondition(room.id);
@@ -103,6 +122,14 @@ async function createRound(room, players, roundNumber, judgePlayer) {
 
 /** Host-only: sets up decks, deals hands, and creates round 1. Call once from the Lobby "Start" button. */
 export async function startGame(room, players) {
+  // The host's own player list can be up to one poll interval (2s) stale —
+  // a player who joined right before "Start game" was clicked could be
+  // missing from it, which would deal them no cards at all and skip them
+  // when creating round 1's submissions. Re-read the roster right before
+  // acting on it to close that window.
+  const freshPlayers = await api.read("players", { room_id: room.id });
+  players = freshPlayers.length >= players.length ? freshPlayers : players;
+
   await materializeDecks(room.id);
   // Deal in order: concurrent reads of the draw pile could otherwise give
   // multiple players the same card before either update reaches the API.

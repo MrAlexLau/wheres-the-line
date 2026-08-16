@@ -109,12 +109,32 @@ async function refresh() {
         state.judgingSlots = await api.read("judging_slots", { round_id: round.id });
       }
       if (round.phase === "SUBMITTING" && !sameId(round.judge_player_id, playerId)) {
+        // Self-heal a missing submission row (e.g. the round-start
+        // bulk-create silently dropped one record) — without it this
+        // player could never actually submit.
+        const mySub = await engine.ensureSubmissionRow(round.id, playerId, state.submissions);
+        if (!state.submissions.some((s) => sameId(s.player_id, playerId))) {
+          state.submissions = [...state.submissions, mySub];
+        }
+
         state.myHand = await api.read("deck_cards", {
           room_id: roomId,
           deck_type: "ACTION",
           status: "IN_HAND",
           holder_player_id: playerId,
         });
+        // Self-heal a short/empty hand (e.g. a dealt card that never landed,
+        // or a late joiner who missed the initial deal). No-ops if the
+        // player already has enough cards.
+        if (state.myHand.length < room.hand_size && !mySub.submitted_at) {
+          await engine.dealUpToHandSize(roomId, playerId, room.hand_size);
+          state.myHand = await api.read("deck_cards", {
+            room_id: roomId,
+            deck_type: "ACTION",
+            status: "IN_HAND",
+            holder_player_id: playerId,
+          });
+        }
       }
     }
   } else {
@@ -264,9 +284,22 @@ function render(animate = true) {
   root.appendChild(view);
 }
 
+// Backend reads/writes aren't guaranteed to agree on scalar typing for a
+// given field (e.g. an id or position coming back as "3" on one poll and 3
+// on the next, or a null-valued column being omitted from the JSON one time
+// and present-as-null the next) — differences that are meaningless to the
+// UI but would still make two JSON.stringify snapshots compare unequal,
+// forcing an unnecessary full re-render. Normalize before comparing.
+function normalizeField(value) {
+  if (value === undefined || value === null) return null;
+  if (typeof value === "number" || typeof value === "boolean") return value;
+  if (typeof value === "string" && value.trim() !== "" && !Number.isNaN(Number(value))) return Number(value);
+  return value;
+}
+
 function stateSnapshot() {
   const pick = (row, fields) =>
-    row ? fields.reduce((out, field) => ({ ...out, [field]: row[field] }), {}) : null;
+    row ? fields.reduce((out, field) => ({ ...out, [field]: normalizeField(row[field]) }), {}) : null;
   const sorted = (rows, fields) =>
     rows
       .map((row) => pick(row, fields))

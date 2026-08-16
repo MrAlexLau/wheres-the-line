@@ -179,6 +179,109 @@ the shared room or remove other players.
 All NocodeBackend datetime writes use `YYYY-MM-DD HH:mm:ss`, matching the
 database's MySQL datetime columns rather than JavaScript's ISO-8601 format.
 
+### 8a. Database Schema
+
+Six tables, all with an auto-incrementing integer `id` primary key. Generated
+from the deployed NocodeBackend schema (instance `56358_wheres_the_line`);
+see `schema.json` at the repo root for the machine-readable source.
+
+**rooms**
+
+| Column | Type | Notes |
+|---|---|---|
+| `room_code` | string | not null |
+| `status` | enum | default `LOBBY` |
+| `host_player_id` | integer | nullable |
+| `target_score` | integer | default 7 |
+| `hand_size` | integer | default 5 |
+| `current_round_number` | integer | default 0 |
+| `current_phase` | string | nullable |
+
+**players**
+
+| Column | Type | Notes |
+|---|---|---|
+| `room_id` | integer | FK → rooms.id, cascade delete |
+| `display_name` | string | not null |
+| `join_order` | integer | not null |
+| `session_token` | string | not null |
+| `connection_status` | enum | default `CONNECTED` |
+| `last_seen_at` | datetime | nullable |
+| `is_host` | integer | 0/1, default 0 |
+| `score` | integer | default 0 |
+
+**rounds**
+
+| Column | Type | Notes |
+|---|---|---|
+| `room_id` | integer | FK → rooms.id, cascade delete |
+| `round_number` | integer | not null |
+| `phase` | enum | default `ROUND_INTRO` |
+| `judge_player_id` | integer | FK → players.id, sets null on player delete |
+| `condition_card_text` | string | nullable |
+| `round_goal` | enum | nullable — `MOST` / `LEAST` / `BETWEEN` |
+| `confirmed_at` | datetime | nullable |
+
+**submissions**
+
+| Column | Type | Notes |
+|---|---|---|
+| `round_id` | integer | FK → rounds.id, cascade delete |
+| `player_id` | integer | FK → players.id, cascade delete |
+| `submitted_at` | datetime | nullable — unset until the player plays a card |
+| `round_score_delta` | integer | nullable — set during `confirmJudging` |
+| `card_text` | string | nullable — unset until submitted |
+
+One row is pre-created per non-judge player when a round starts (see §8b).
+
+**deck_cards**
+
+| Column | Type | Notes |
+|---|---|---|
+| `room_id` | integer | FK → rooms.id, cascade delete |
+| `deck_type` | enum | `CONDITION` / `ACTION` |
+| `card_text` | string | not null |
+| `status` | enum | default `IN_DRAW_PILE`; also `IN_HAND` / `DISCARDED` |
+| `holder_player_id` | integer | FK → players.id, sets null on player delete |
+| `draw_order` | integer | nullable — shuffle position within the draw pile |
+
+**judging_slots**
+
+| Column | Type | Notes |
+|---|---|---|
+| `round_id` | integer | FK → rounds.id, cascade delete |
+| `submission_id` | integer | FK → submissions.id, cascade delete |
+| `bucket` | enum | default `NEUTRAL`; also `WOULD` / `WOULDNT` |
+| `position` | integer | nullable — order within a bucket; unset while `NEUTRAL` |
+
+There's also an internal `ncba_rls_config` table (row-level-security policy
+config) that's part of the NocodeBackend instance itself, not app data; the
+Netlify Function proxy's table allowlist excludes it.
+
+### 8b. Known Backend Quirks
+
+These are real inconsistencies observed from the deployed instance, not
+assumptions — code that reads/writes these tables should account for them:
+
+- **Enum casing**: the schema declares enums uppercase (`LOBBY`,
+  `IN_PROGRESS`, `NEUTRAL`, ...) except `players.connection_status`, whose
+  swagger doc lists lowercase values (`connected` / `disconnected`) — the
+  one enum column the client doesn't currently read or write.
+- **Id type stability**: `POST /create` responses type `id` as an integer,
+  but list/read responses aren't guaranteed to serialize every integer
+  column the same way on every call. Client code should compare ids loosely
+  (string-coerced) rather than with `===` — see `sameId()` in
+  `room-app.js` / `host-engine.js`.
+- **Read-after-write**: a row you just wrote isn't guaranteed to reflect in
+  the very next read of that table (see `submitCard`'s "did everyone
+  submit?" check in `host-engine.js`, which patches in its own known write
+  before evaluating).
+- **Bulk-create partial failure**: `bulk/create` can return HTTP 207 for a
+  partially-successful batch; the client currently treats 207 the same as a
+  full success (see `api.bulkCreate`). Round-start self-heals
+  (`ensureSubmissionRow`, `dealUpToHandSize`) exist specifically to recover
+  from a dropped record in one of these batches.
+
 ## 9. Implementation Status
 
 The multiplayer phase is implemented in the current app. The following
