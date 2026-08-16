@@ -98,7 +98,7 @@
     disabled={frozenNeutral.length > 0 || frozenWould.length === 0 || $uiBusy}
     on:click={confirmSplitAction}
   >
-    Next: Rank your "Would do" cards
+    {frozenWould.length === 1 ? "Confirm" : 'Next: Rank your "Would do" cards'}
   </button>
   {#if frozenNeutral.length === 0 && frozenWould.length === 0}
     <p class="subtitle">You need at least one "Would do" card to continue.</p>

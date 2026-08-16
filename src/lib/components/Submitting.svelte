@@ -15,8 +15,8 @@
 
 <ScoreStrip />
 <h2>Judge: {$judgeName}</h2>
-<div class="card condition">{$round.condition_card_text}</div>
 <CriteriaCallout goal={$round.round_goal} judgeName={$judgeName} />
+<div class="card condition">{$round.condition_card_text}</div>
 
 {#if $isJudge}
   <p class="subtitle">You're judging this round — sit tight while everyone else submits.</p>

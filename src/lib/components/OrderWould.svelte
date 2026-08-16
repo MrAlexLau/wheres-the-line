@@ -23,8 +23,8 @@
 {#if $isJudge}
   <h2>Step 2: Rank them</h2>
   <p class="subtitle">
-    Drag to order from easiest (top) to hardest (bottom). <strong>The bottom card wins</strong> — the least
-    likely thing you'd still do.
+    Drag to order from easiest (top) to hardest (bottom). <strong>The bottom card wins</strong> — the best dare,
+    the most difficult thing you'd still do for it.
   </p>
 {:else}
   <p class="subtitle">{$judgeName} is ranking the "Would do" cards…</p>

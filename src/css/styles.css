@@ -170,13 +170,6 @@ h3 {
   text-underline-offset: 3px;
 }
 
-.criteria-sub {
-  margin: 0.4rem 0 0;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  line-height: 1.4;
-}
-
 /* --- Buttons & inputs --- */
 
 button {

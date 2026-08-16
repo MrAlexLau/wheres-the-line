@@ -310,7 +310,18 @@ export async function applyBucketsAction(wouldIds, wouldntIds, neutralIds) {
 
 // Step 1 -> step 2: lock in the Would/Wouldn't split.
 export function confirmSplitAction() {
-  return runRoomAction(() => engine.confirmSplit(get(round), get(judgingSlots)));
+  return runRoomAction(async () => {
+    const slots = get(judgingSlots);
+    const wouldCount = slots.filter((s) => s.bucket === "WOULD").length;
+    // With only one card in "Would do" there's nothing to rank — it's the
+    // winner by default. Skip straight to scoring instead of showing a
+    // ranking screen with a single, unmovable card on it.
+    if (wouldCount === 1) {
+      await engine.confirmJudging(get(room), get(round), get(submissions), slots, get(players));
+    } else {
+      await engine.confirmSplit(get(round), slots);
+    }
+  });
 }
 
 // Same "patch immediately + reapply after refresh" pattern as
