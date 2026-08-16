@@ -40,9 +40,12 @@
 
 {#if $isJudge}
   <h2>Where's the line?</h2>
-  <p class="subtitle">Drag every card out of the middle pile into a bucket, ordering by how extreme it is.</p>
+  <p class="subtitle">
+    Sort into <strong>Would do</strong> / <strong>Wouldn't do</strong>, ordering "Would do" from easiest (top) to most
+    extreme (bottom). <strong>The bottom card in "Would do" wins</strong> — the least likely thing you'd still do.
+  </p>
 {:else}
-  <p class="subtitle">{$judgeName} is deciding where the line is…</p>
+  <p class="subtitle">{$judgeName} is deciding where the line is — the winning card is whichever one ends up at the bottom of "Would do."</p>
 {/if}
 
 <div
@@ -55,12 +58,15 @@
   }}
 >
   <div class="bucket would-bucket">
-    <div class="bucket-header would-header">✅ Would do</div>
+    <div class="bucket-header would-header">✅ Would do <span class="bucket-hint">(top = easy, bottom = your limit)</span></div>
     <div class="bucket-cards">
-      {#each frozenWould as s (s.id)}
+      {#each frozenWould as s, i (s.id)}
         <div class="order-row card-row" data-sort-key={`slot:${s.id}`}>
           {#if $isJudge}<span class="drag-handle" aria-hidden="true">⠿</span>{/if}
           <div class="card action order-card">{cardText(s.submission_id)}</div>
+          {#if i === frozenWould.length - 1}
+            <span class="winner-badge">🏆 wins</span>
+          {/if}
         </div>
       {/each}
     </div>

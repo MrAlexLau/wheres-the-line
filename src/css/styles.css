@@ -170,6 +170,13 @@ h3 {
   text-underline-offset: 3px;
 }
 
+.criteria-sub {
+  margin: 0.4rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
 /* --- Buttons & inputs --- */
 
 button {
@@ -502,6 +509,25 @@ label {
 .judge-order.read-only .order-row {
   cursor: default;
   touch-action: auto;
+}
+
+.bucket-hint {
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  opacity: 0.85;
+  font-size: 0.72rem;
+}
+
+.winner-badge {
+  flex: 0 0 auto;
+  background: var(--accent-2);
+  color: #2a1e00;
+  font-weight: 800;
+  font-size: 0.72rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  white-space: nowrap;
 }
 
 .drag-handle {

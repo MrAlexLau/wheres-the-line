@@ -15,7 +15,7 @@
 
 import { api } from "./api.js";
 import { CONDITIONS, ACTIONS } from "../data/cards.js";
-import { pickRoundGoal, shuffle } from "../js/game.js";
+import { shuffle } from "../js/game.js";
 import { sameId } from "./ids.js";
 
 async function materializeDecks(roomId) {
@@ -165,18 +165,22 @@ export async function ensureSubmissionRow(roundId, playerId, existingSubmissions
 async function createRound(room, players, roundNumber, judgePlayer) {
   const nonJudge = players.filter((p) => !sameId(p.id, judgePlayer.id));
   const condition = await drawCondition(room.id);
-  const roundGoal = pickRoundGoal(nonJudge.length);
 
   // Rounds open straight into SUBMITTING — there's no separate "pass to the
   // judge" interstitial in multiplayer (everyone already has their own
   // device), so a manual "start round" gate would just be an extra tap.
+  //
+  // round_goal is always "MOST": scoring is always "the least likely thing
+  // the judge would still do" — the card right on the edge of their "Would
+  // do" bucket. There's no longer a per-round random goal; the enum column
+  // stays for schema compat but only ever gets this one value now.
   const roundId = await api.create("rounds", {
     room_id: room.id,
     round_number: roundNumber,
     phase: "SUBMITTING",
     judge_player_id: judgePlayer.id,
     condition_card_text: condition,
-    round_goal: roundGoal,
+    round_goal: "MOST",
   });
   await api.bulkCreate(
     "submissions",
@@ -302,19 +306,11 @@ export async function applyBuckets(wouldOrder, wouldntOrder, neutralOrder) {
 /** Judge-only: scores the round, discards played cards, refills hands, advances to REVEAL. */
 export async function confirmJudging(room, round, submissions, judgingSlots, players) {
   const would = judgingSlots.filter((s) => s.bucket === "WOULD").sort((a, b) => a.position - b.position);
-  const wouldnt = judgingSlots.filter((s) => s.bucket === "WOULDNT").sort((a, b) => a.position - b.position);
-  const mostSlot = would[would.length - 1] ?? null;
-  const leastSlot = wouldnt[0] ?? null;
-
-  const scorerSubmissionIds = [];
-  if (round.round_goal === "MOST") {
-    if (mostSlot) scorerSubmissionIds.push(mostSlot.submission_id);
-  } else if (round.round_goal === "LEAST") {
-    if (leastSlot) scorerSubmissionIds.push(leastSlot.submission_id);
-  } else {
-    if (mostSlot) scorerSubmissionIds.push(mostSlot.submission_id);
-    if (leastSlot) scorerSubmissionIds.push(leastSlot.submission_id);
-  }
+  // The winner is always the card right on the edge of "Would do" — the
+  // least likely thing the judge would still do. No more MOST/LEAST/BETWEEN
+  // random goal; this is the only rule now.
+  const winningSlot = would[would.length - 1] ?? null;
+  const scorerSubmissionIds = winningSlot ? [winningSlot.submission_id] : [];
 
   const writes = [];
   for (const s of submissions) {
