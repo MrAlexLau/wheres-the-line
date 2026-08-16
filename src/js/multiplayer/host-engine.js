@@ -11,7 +11,7 @@
 // write shared rows. See docs/SPEC.md §8 and the plan file for context.
 
 import { api } from "./api.js";
-import { CONDITIONS, ACTIONS } from "../data/cards.js";
+import { CONDITIONS, ACTIONS } from "../../data/cards.js";
 import { pickRoundGoal, shuffle } from "../game.js";
 
 async function materializeDecks(roomId) {
