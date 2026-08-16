@@ -17,16 +17,16 @@ import { pickRoundGoal, shuffle } from "../game.js";
 async function materializeDecks(roomId) {
   const conditionRecords = shuffle(CONDITIONS).map((card_text, i) => ({
     room_id: roomId,
-    deck_type: "condition",
+    deck_type: "CONDITION",
     card_text,
-    status: "in_draw_pile",
+    status: "IN_DRAW_PILE",
     draw_order: i,
   }));
   const actionRecords = shuffle(ACTIONS).map((card_text, i) => ({
     room_id: roomId,
-    deck_type: "action",
+    deck_type: "ACTION",
     card_text,
-    status: "in_draw_pile",
+    status: "IN_DRAW_PILE",
     draw_order: i,
   }));
   await api.bulkCreate("deck_cards", conditionRecords);
@@ -34,40 +34,40 @@ async function materializeDecks(roomId) {
 }
 
 async function reshuffleIfNeeded(roomId, deckType) {
-  const drawable = await api.read("deck_cards", { room_id: roomId, deck_type: deckType, status: "in_draw_pile", limit: 1 });
+  const drawable = await api.read("deck_cards", { room_id: roomId, deck_type: deckType, status: "IN_DRAW_PILE", limit: 1 });
   if (drawable.length > 0) return;
-  const discarded = await api.read("deck_cards", { room_id: roomId, deck_type: deckType, status: "discarded", limit: 500 });
+  const discarded = await api.read("deck_cards", { room_id: roomId, deck_type: deckType, status: "DISCARDED", limit: 500 });
   if (discarded.length === 0) throw new Error(`${deckType} deck is empty and has nothing to reshuffle.`);
   const order = shuffle(discarded.map((r) => r.id));
-  await Promise.all(order.map((id, i) => api.update("deck_cards", id, { status: "in_draw_pile", draw_order: i })));
+  await Promise.all(order.map((id, i) => api.update("deck_cards", id, { status: "IN_DRAW_PILE", draw_order: i })));
 }
 
 /** Draws one Condition card, marking it discarded immediately (conditions never sit "in hand"). */
 async function drawCondition(roomId) {
-  await reshuffleIfNeeded(roomId, "condition");
-  const [row] = await api.read("deck_cards", { room_id: roomId, deck_type: "condition", status: "in_draw_pile", sort: "draw_order", order: "asc", limit: 1 });
-  await api.update("deck_cards", row.id, { status: "discarded" });
+  await reshuffleIfNeeded(roomId, "CONDITION");
+  const [row] = await api.read("deck_cards", { room_id: roomId, deck_type: "CONDITION", status: "IN_DRAW_PILE", sort: "draw_order", order: "asc", limit: 1 });
+  await api.update("deck_cards", row.id, { status: "DISCARDED" });
   return row.card_text;
 }
 
 async function dealUpToHandSize(roomId, playerId, handSize) {
-  const held = await api.read("deck_cards", { room_id: roomId, deck_type: "action", status: "in_hand", holder_player_id: playerId, limit: 500 });
+  const held = await api.read("deck_cards", { room_id: roomId, deck_type: "ACTION", status: "IN_HAND", holder_player_id: playerId, limit: 500 });
   let need = handSize - held.length;
   if (need <= 0) return;
   while (need > 0) {
     const drawable = await api.read("deck_cards", {
       room_id: roomId,
-      deck_type: "action",
-      status: "in_draw_pile",
+      deck_type: "ACTION",
+      status: "IN_DRAW_PILE",
       sort: "draw_order",
       order: "asc",
       limit: need,
     });
     if (drawable.length === 0) {
-      await reshuffleIfNeeded(roomId, "action");
+      await reshuffleIfNeeded(roomId, "ACTION");
       continue;
     }
-    await Promise.all(drawable.map((row) => api.update("deck_cards", row.id, { status: "in_hand", holder_player_id: playerId })));
+    await Promise.all(drawable.map((row) => api.update("deck_cards", row.id, { status: "IN_HAND", holder_player_id: playerId })));
     need -= drawable.length;
   }
 }
@@ -75,12 +75,12 @@ async function dealUpToHandSize(roomId, playerId, handSize) {
 async function createRound(room, players, roundNumber, judgePlayer) {
   const nonJudge = players.filter((p) => p.id !== judgePlayer.id);
   const condition = await drawCondition(room.id);
-  const roundGoal = pickRoundGoal(nonJudge.length).toLowerCase();
+  const roundGoal = pickRoundGoal(nonJudge.length);
 
   const roundId = await api.create("rounds", {
     room_id: room.id,
     round_number: roundNumber,
-    phase: "round_intro",
+    phase: "ROUND_INTRO",
     judge_player_id: judgePlayer.id,
     condition_card_text: condition,
     round_goal: roundGoal,
@@ -89,7 +89,7 @@ async function createRound(room, players, roundNumber, judgePlayer) {
     "submissions",
     nonJudge.map((p) => ({ round_id: roundId, player_id: p.id }))
   );
-  await api.update("rooms", room.id, { current_round_number: roundNumber, current_phase: "round_intro" });
+  await api.update("rooms", room.id, { current_round_number: roundNumber, current_phase: "ROUND_INTRO" });
   return roundId;
 }
 
@@ -103,20 +103,20 @@ export async function startGame(room, players) {
   }
   const judge = players[0];
   await createRound(room, players, 1, judge);
-  await api.update("rooms", room.id, { status: "in_progress" });
+  await api.update("rooms", room.id, { status: "IN_PROGRESS" });
 }
 
 /** Judge-only: reveals the condition and opens submissions. */
 export async function startSubmissions(room, round) {
-  await api.update("rounds", round.id, { phase: "submitting" });
-  await api.update("rooms", room.id, { current_phase: "submitting" });
+  await api.update("rounds", round.id, { phase: "SUBMITTING" });
+  await api.update("rooms", room.id, { current_phase: "SUBMITTING" });
 }
 
 /** Player-only: plays one card from their hand. */
 export async function submitCard(room, roundId, submissionId, playerId, card) {
-  const [deckRow] = await api.read("deck_cards", { room_id: room.id, holder_player_id: playerId, card_text: card, status: "in_hand", limit: 1 });
+  const [deckRow] = await api.read("deck_cards", { room_id: room.id, holder_player_id: playerId, card_text: card, status: "IN_HAND", limit: 1 });
   if (!deckRow) throw new Error("That card isn't in your hand anymore.");
-  await api.update("deck_cards", deckRow.id, { status: "discarded", holder_player_id: null });
+  await api.update("deck_cards", deckRow.id, { status: "DISCARDED", holder_player_id: null });
   await api.update("submissions", submissionId, { card_text: card, submitted_at: new Date().toISOString() });
 
   const allSubmissions = await api.read("submissions", { round_id: roundId });
@@ -131,32 +131,32 @@ async function beginJudging(room, roundId, submissions) {
   const shuffled = shuffle(submissions);
   await api.bulkCreate(
     "judging_slots",
-    shuffled.map((s) => ({ round_id: roundId, submission_id: s.id, bucket: "neutral" }))
+    shuffled.map((s) => ({ round_id: roundId, submission_id: s.id, bucket: "NEUTRAL" }))
   );
-  await api.update("rounds", roundId, { phase: "judging" });
-  await api.update("rooms", room.id, { current_phase: "judging" });
+  await api.update("rounds", roundId, { phase: "JUDGING" });
+  await api.update("rooms", room.id, { current_phase: "JUDGING" });
 }
 
 /** Judge-only: persists a full bucket rearrangement from the drag-sort UI. */
 export async function applyBuckets(wouldOrder, wouldntOrder, neutralOrder) {
   const writes = [];
-  wouldOrder.forEach((slotId, i) => writes.push(api.update("judging_slots", slotId, { bucket: "would", position: i })));
-  wouldntOrder.forEach((slotId, i) => writes.push(api.update("judging_slots", slotId, { bucket: "wouldnt", position: i })));
-  neutralOrder.forEach((slotId) => writes.push(api.update("judging_slots", slotId, { bucket: "neutral", position: null })));
+  wouldOrder.forEach((slotId, i) => writes.push(api.update("judging_slots", slotId, { bucket: "WOULD", position: i })));
+  wouldntOrder.forEach((slotId, i) => writes.push(api.update("judging_slots", slotId, { bucket: "WOULDNT", position: i })));
+  neutralOrder.forEach((slotId) => writes.push(api.update("judging_slots", slotId, { bucket: "NEUTRAL", position: null })));
   await Promise.all(writes);
 }
 
 /** Judge-only: scores the round, discards played cards, refills hands, advances to REVEAL. */
 export async function confirmJudging(room, round, submissions, judgingSlots, players) {
-  const would = judgingSlots.filter((s) => s.bucket === "would").sort((a, b) => a.position - b.position);
-  const wouldnt = judgingSlots.filter((s) => s.bucket === "wouldnt").sort((a, b) => a.position - b.position);
+  const would = judgingSlots.filter((s) => s.bucket === "WOULD").sort((a, b) => a.position - b.position);
+  const wouldnt = judgingSlots.filter((s) => s.bucket === "WOULDNT").sort((a, b) => a.position - b.position);
   const mostSlot = would[would.length - 1] ?? null;
   const leastSlot = wouldnt[0] ?? null;
 
   const scorerSubmissionIds = [];
-  if (round.round_goal === "most") {
+  if (round.round_goal === "MOST") {
     if (mostSlot) scorerSubmissionIds.push(mostSlot.submission_id);
-  } else if (round.round_goal === "least") {
+  } else if (round.round_goal === "LEAST") {
     if (leastSlot) scorerSubmissionIds.push(leastSlot.submission_id);
   } else {
     if (mostSlot) scorerSubmissionIds.push(mostSlot.submission_id);
@@ -179,16 +179,16 @@ export async function confirmJudging(room, round, submissions, judgingSlots, pla
     await dealUpToHandSize(room.id, submission.player_id, room.hand_size);
   }
 
-  await api.update("rounds", round.id, { phase: "reveal", confirmed_at: new Date().toISOString() });
-  await api.update("rooms", room.id, { current_phase: "reveal" });
+  await api.update("rounds", round.id, { phase: "REVEAL", confirmed_at: new Date().toISOString() });
+  await api.update("rooms", room.id, { current_phase: "REVEAL" });
 }
 
 /** Host-only: rotates the judge and starts the next round, or ends the game. */
 export async function nextRound(room, round, players) {
   const targetScore = room.target_score;
   if (players.some((p) => p.score >= targetScore)) {
-    await api.update("rounds", round.id, { phase: "game_over" });
-    await api.update("rooms", room.id, { status: "complete", current_phase: "game_over" });
+    await api.update("rounds", round.id, { phase: "GAME_OVER" });
+    await api.update("rooms", room.id, { status: "COMPLETE", current_phase: "GAME_OVER" });
     return;
   }
   const orderedByJoin = players.slice().sort((a, b) => a.join_order - b.join_order);

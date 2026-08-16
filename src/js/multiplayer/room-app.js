@@ -88,20 +88,20 @@ async function refresh() {
   state.room = room;
   state.players = players;
 
-  if (room.status === "in_progress" || room.status === "complete") {
+  if (room.status === "IN_PROGRESS" || room.status === "COMPLETE") {
     state.screen = "in-round";
     const [round] = await api.read("rounds", { room_id: roomId, round_number: room.current_round_number, limit: 1 });
     state.round = round;
     if (round) {
       state.submissions = await api.read("submissions", { round_id: round.id });
-      if (round.phase === "judging" || round.phase === "reveal") {
+      if (round.phase === "JUDGING" || round.phase === "REVEAL") {
         state.judgingSlots = await api.read("judging_slots", { round_id: round.id });
       }
-      if (round.phase === "submitting" && round.judge_player_id !== playerId) {
+      if (round.phase === "SUBMITTING" && round.judge_player_id !== playerId) {
         state.myHand = await api.read("deck_cards", {
           room_id: roomId,
-          deck_type: "action",
-          status: "in_hand",
+          deck_type: "ACTION",
+          status: "IN_HAND",
           holder_player_id: playerId,
         });
       }
@@ -126,7 +126,7 @@ async function createRoom() {
   try {
     const roomId = await api.create("rooms", {
       room_code: randomRoomCode(),
-      status: "lobby",
+      status: "LOBBY",
       target_score: Number(state.form.targetScore) || 7,
       hand_size: Number(state.form.handSize) || 5,
       current_round_number: 0,
@@ -162,7 +162,7 @@ async function joinRoom() {
   try {
     const [room] = await api.read("rooms", { room_code: code, limit: 1 });
     if (!room) return fail("No room found with that code.");
-    if (room.status !== "lobby") return fail("That game has already started.");
+    if (room.status !== "LOBBY") return fail("That game has already started.");
     const players = await api.read("players", { room_id: room.id });
     if (players.length >= 8) return fail("That room is full.");
     if (players.some((p) => p.display_name.toLowerCase() === name.toLowerCase())) {
@@ -395,16 +395,16 @@ function renderLobby() {
 function renderRound() {
   const round = state.round;
   if (!round) return el("div", { class: "screen", text: "Setting up the round…" });
-  if (round.phase === "game_over" || state.room.status === "complete") return renderGameOver();
+  if (round.phase === "GAME_OVER" || state.room.status === "COMPLETE") return renderGameOver();
 
   switch (round.phase) {
-    case "round_intro":
+    case "ROUND_INTRO":
       return renderRoundIntro();
-    case "submitting":
+    case "SUBMITTING":
       return renderSubmitting();
-    case "judging":
+    case "JUDGING":
       return renderJudging();
-    case "reveal":
+    case "REVEAL":
       return renderReveal();
     default:
       return el("div", { class: "screen", text: "Unknown phase." });
@@ -416,8 +416,8 @@ function judgeName() {
 }
 
 function goalHeadline(goal) {
-  if (goal === "least") return "Goal: Submit an action the judge WOULD NOT do";
-  if (goal === "between") return "Goal: Submit an action the judge WOULD do, or WOULD NOT do";
+  if (goal === "LEAST") return "Goal: Submit an action the judge WOULD NOT do";
+  if (goal === "BETWEEN") return "Goal: Submit an action the judge WOULD do, or WOULD NOT do";
   return "Goal: Submit an action the judge WOULD do";
 }
 
@@ -499,9 +499,9 @@ function renderJudging() {
   const wouldCards = el("div", { class: "bucket-cards" });
   const neutralCards = el("div", { class: "bucket-cards" });
   const wouldntCards = el("div", { class: "bucket-cards" });
-  slotsFor("would").forEach((s) => wouldCards.appendChild(judgeRow(s.id, cardText(s.submission_id))));
-  slotsFor("neutral").forEach((s) => neutralCards.appendChild(judgeRow(s.id, cardText(s.submission_id))));
-  slotsFor("wouldnt").forEach((s) => wouldntCards.appendChild(judgeRow(s.id, cardText(s.submission_id))));
+  slotsFor("WOULD").forEach((s) => wouldCards.appendChild(judgeRow(s.id, cardText(s.submission_id))));
+  slotsFor("NEUTRAL").forEach((s) => neutralCards.appendChild(judgeRow(s.id, cardText(s.submission_id))));
+  slotsFor("WOULDNT").forEach((s) => wouldntCards.appendChild(judgeRow(s.id, cardText(s.submission_id))));
 
   const container = el("div", { class: "judge-order" }, [
     el("div", { class: "bucket would-bucket" }, [el("div", { class: "bucket-header would-header", text: "✅ Would do" }), wouldCards]),
@@ -515,7 +515,7 @@ function renderJudging() {
     await refreshAndRender();
   });
 
-  const neutralCount = slotsFor("neutral").length;
+  const neutralCount = slotsFor("NEUTRAL").length;
   screen.appendChild(
     el("button", {
       class: "btn-primary",
