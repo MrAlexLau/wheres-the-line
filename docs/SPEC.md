@@ -23,7 +23,7 @@ steps:
    else, including every card in "Wouldn't do," scores nothing that round.
 
 Only one player scores per round. Play continues, rotating the judge, until
-a player reaches the target score (default: 7 points), at which point the
+a player reaches the target score (default: 3 points), at which point the
 game ends and a winner is declared.
 
 Because scoring always comes down to the single most extreme thing the
@@ -49,7 +49,7 @@ judge well, not just whoever can write the funniest card.
   device and a single deck of default content usable.
 - Setup screen collects:
   - Player names (add/remove, reorder).
-  - Target score to win (default 7, editable 3–15).
+  - Target score to win (default 3, editable 3–15).
   - Hand size (default 5, editable 5–10).
 - Judge order is the order players were added; judge rotates left each
   round.
