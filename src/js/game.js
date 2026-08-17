@@ -20,31 +20,11 @@
 export const PHASES = {
   ROUND_INTRO: "ROUND_INTRO", // showing "pass to judge" + condition card
   SUBMITTING: "SUBMITTING", // cycling through non-judge players collecting a card each
-  JUDGING: "JUDGING", // judge reviewing shuffled/anonymized submissions
+  JUDGING: "JUDGING", // judge splitting submissions into Would do / Wouldn't do
+  ORDERING: "ORDERING", // judge ranking the Would-do pile easiest-to-hardest
   REVEAL: "REVEAL", // showing who played what + who scored
   GAME_OVER: "GAME_OVER",
 };
-
-/**
- * A round's goal decides which side(s) of the line actually score:
- * - MOST: only the card just above the line scores.
- * - LEAST: only the card just below the line scores.
- * - BETWEEN: both cards touching the line score (the original two-point
- *   rule). Only offered when there are enough submitters (3+, i.e. 4+
- *   players) for "the line" to be a meaningful middle rather than just the
- *   only two cards on the table.
- */
-export const ROUND_GOALS = {
-  MOST: "MOST",
-  LEAST: "LEAST",
-  BETWEEN: "BETWEEN",
-};
-
-export function pickRoundGoal(submitterCount) {
-  const options = [ROUND_GOALS.MOST, ROUND_GOALS.LEAST];
-  if (submitterCount >= 3) options.push(ROUND_GOALS.BETWEEN);
-  return options[Math.floor(Math.random() * options.length)];
-}
 
 export function shuffle(array) {
   const result = array.slice();
@@ -116,15 +96,14 @@ export class Game {
     /** index into non-judge submission order, for pass-and-play turn taking */
     this.submitOrder = this.nonJudgePlayers().map((p) => p.id);
     this.submitCursor = 0;
-    this.roundGoal = pickRoundGoal(this.submitOrder.length);
 
     /**
-     * The three piles the judge sorts submissions into during JUDGING, each
-     * holding playerIds (anonymized — the judge only sees card text, not
-     * names). `wouldIds` and `wouldntIds` are ordered nearest-the-divide-last
-     * / nearest-the-divide-first respectively, so the boundary cards are
-     * always wouldIds[last] and wouldntIds[0]. Everything starts in
-     * `neutralIds`; judging can't be confirmed until it's empty.
+     * The judge sorts submissions into two piles (anonymized — the judge
+     * only sees card text, not names): everything starts in `neutralIds`,
+     * then gets split into `wouldIds` / `wouldntIds`. Once the split is
+     * confirmed, `wouldIds` gets reordered easiest(first)-to-hardest(last)
+     * during ORDERING — the winner is always `wouldIds[wouldIds.length -
+     * 1]`, the hardest thing the judge would still do.
      */
     this.neutralIds = [];
     this.wouldIds = [];
@@ -211,47 +190,51 @@ export class Game {
     this.neutralIds = neutralIds.slice();
   }
 
-  /** playerId whose submission is closest to the divide on the "would do" side ("the MOST"). */
-  get mostPick() {
-    return this.wouldIds[this.wouldIds.length - 1] ?? null;
-  }
-
-  /** playerId whose submission is closest to the divide on the "wouldn't do" side ("the LEAST"). */
-  get leastPick() {
-    return this.wouldntIds[0] ?? null;
+  /** Step 1 can't be confirmed until every card is sorted, and there's at least one Would-do card to rank. */
+  canConfirmSplit() {
+    return this.phase === PHASES.JUDGING && this.neutralIds.length === 0 && this.wouldIds.length > 0;
   }
 
   /**
-   * playerIds that would score a point if judging were confirmed right now,
-   * given the round's goal:
-   * - MOST: just the card just above the line (mostPick).
-   * - LEAST: just the card just below the line (leastPick).
-   * - BETWEEN: both mostPick and leastPick.
-   * Landing on the wrong side of the line simply scores nothing — there's
-   * no penalty.
+   * Locks in the Would/Wouldn't split and moves to ranking. With only one
+   * Would-do card there's nothing to rank — it wins by default, so this
+   * skips straight to scoring instead of showing a ranking step with a
+   * single, unmovable card on it.
    */
-  pendingWinners() {
-    const scorers = [];
-    if (this.roundGoal === ROUND_GOALS.MOST) {
-      if (this.mostPick) scorers.push(this.mostPick);
-    } else if (this.roundGoal === ROUND_GOALS.LEAST) {
-      if (this.leastPick) scorers.push(this.leastPick);
-    } else {
-      if (this.mostPick) scorers.push(this.mostPick);
-      if (this.leastPick) scorers.push(this.leastPick);
+  confirmSplit() {
+    if (!this.canConfirmSplit()) {
+      throw new Error('You need at least one card in "Would do" before continuing.');
     }
-    return scorers;
+    if (this.wouldIds.length === 1) {
+      this.confirmJudging();
+      return;
+    }
+    this.phase = PHASES.ORDERING;
   }
 
-  /** Judging can't be confirmed until every card has been sorted out of the neutral pile. */
-  canConfirmJudging() {
-    return this.phase === PHASES.JUDGING && this.neutralIds.length === 0;
+  /** Persists the judge's easiest(first)-to-hardest(last) ranking of the Would-do pile. */
+  applyOrder(orderedWouldIds) {
+    if (this.phase !== PHASES.ORDERING) return;
+    const expected = new Set(this.wouldIds);
+    const isPermutation =
+      orderedWouldIds.length === expected.size && orderedWouldIds.every((id) => expected.has(id));
+    if (!isPermutation) {
+      throw new Error("Order must be a permutation of the Would-do pile.");
+    }
+    this.wouldIds = orderedWouldIds.slice();
+  }
+
+  /** playerId of the hardest thing the judge would still do — the only card that scores. */
+  get winnerPick() {
+    return this.wouldIds[this.wouldIds.length - 1] ?? null;
+  }
+
+  /** playerIds that would score a point if judging were confirmed right now: just the winner, if any. */
+  pendingWinners() {
+    return this.winnerPick ? [this.winnerPick] : [];
   }
 
   confirmJudging() {
-    if (!this.canConfirmJudging()) {
-      throw new Error("Not currently judging.");
-    }
     const scorers = this.pendingWinners();
     for (const id of scorers) {
       this.players.find((p) => p.id === id).score += 1;
@@ -298,7 +281,6 @@ export class Game {
     this.wouldntIds = [];
     this.submitOrder = this.nonJudgePlayers().map((p) => p.id);
     this.submitCursor = 0;
-    this.roundGoal = pickRoundGoal(this.submitOrder.length);
     this.phase = PHASES.ROUND_INTRO;
   }
 }

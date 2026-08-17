@@ -1,27 +1,15 @@
-import { Game, PHASES, ROUND_GOALS } from "./game.js";
+import { Game, PHASES } from "./game.js";
 import { CONDITIONS, ACTIONS } from "../data/cards.js";
 
-/** "Goal: Submit an action the judge WOULD(NOT) do", with WOULD/WOULD NOT underlined. */
-function goalHeadlineNodes(goal) {
-  const nodes = [document.createTextNode("Goal: Submit an action the judge ")];
-  if (goal === ROUND_GOALS.LEAST) {
-    nodes.push(el("u", { text: "WOULD NOT" }), document.createTextNode(" do"));
-  } else if (goal === ROUND_GOALS.BETWEEN) {
-    nodes.push(
-      el("u", { text: "WOULD" }),
-      document.createTextNode(" do, or "),
-      el("u", { text: "WOULD NOT" }),
-      document.createTextNode(" do")
-    );
-  } else {
-    nodes.push(el("u", { text: "WOULD" }), document.createTextNode(" do"));
-  }
-  return nodes;
-}
-
 /** A big, hard-to-miss callout answering "what card should I play?" */
-function renderCriteriaCallout(goal) {
-  return el("div", { class: "criteria-callout" }, [el("p", { class: "criteria-main" }, goalHeadlineNodes(goal))]);
+function renderCriteriaCallout(judgeName) {
+  return el("div", { class: "criteria-callout" }, [
+    el("p", { class: "criteria-main" }, [
+      document.createTextNode("Goal: play the "),
+      el("u", { text: "most intense" }),
+      document.createTextNode(` card that ${judgeName} would do for:`),
+    ]),
+  ]);
 }
 
 const root = document.getElementById("app");
@@ -99,7 +87,7 @@ function brand() {
 const INTRO_SLIDES = [
   {
     title: "Where's the Line?",
-    body: "A party game about knowing your friends — pass the device around and play.",
+    body: "Each round, one player is the judge. Everyone else secretly submits an action card — their dare.",
     scene: sceneWelcome,
   },
   {
@@ -109,7 +97,7 @@ const INTRO_SLIDES = [
   },
   {
     title: "Play your dare",
-    body: "Everyone but the judge secretly picks an action card from their hand: their dare for it.",
+    body: "Everyone but the judge secretly picks a card from their hand — something you think the judge WOULD actually do for it.",
     scene: sceneDares,
   },
   {
@@ -118,8 +106,13 @@ const INTRO_SLIDES = [
     scene: sceneSort,
   },
   {
-    title: "Most & least both score",
-    body: "The most extreme “yes” and the least likely “yes” each win a point for whoever played them.",
+    title: "Then ranks them",
+    body: 'Within "Would do," the judge orders every card from easiest to hardest.',
+    scene: sceneRank,
+  },
+  {
+    title: "Only the hardest wins",
+    body: "The hardest thing the judge would still do — the best dare — is the only card that scores a point.",
     scene: sceneScore,
   },
   {
@@ -213,12 +206,19 @@ function sceneDares() {
   const wrap = el("div", { class: "howto-scene howto-scene-dares" });
   const captions = ["run a mile in jeans", "eat a ghost pepper", "sing karaoke solo"];
   captions.forEach((text, i) => {
+    const isPicked = i === captions.length - 1;
     wrap.appendChild(
-      el("div", {
-        class: "card action howto-dare-card howto-anim-fan",
-        style: `animation-delay:${i * 0.18}s;`,
-        text,
-      })
+      el(
+        "div",
+        {
+          class: `card action howto-dare-card howto-anim-fan${isPicked ? " howto-picked" : ""}`,
+          style: `animation-delay:${i * 0.18}s;`,
+        },
+        [
+          document.createTextNode(text),
+          isPicked ? el("span", { class: "howto-picked-badge howto-anim-pop", style: "animation-delay:0.65s;", text: "✓ picked" }) : null,
+        ]
+      )
     );
   });
   return wrap;
@@ -226,29 +226,49 @@ function sceneDares() {
 
 function sceneSort() {
   const wrap = el("div", { class: "howto-scene howto-scene-sort" });
-  wrap.appendChild(el("div", { class: "howto-sort-zone would", text: "✅ Would do" }));
-  wrap.appendChild(el("div", { class: "howto-sort-zone wouldnt", text: "🚫 Wouldn't do" }));
-  wrap.appendChild(el("div", { class: "card action howto-sort-card howto-anim-slide-right", text: "run a mile in jeans" }));
   wrap.appendChild(
-    el("div", { class: "card action howto-sort-card howto-anim-slide-left", text: "eat a ghost pepper" })
+    el("div", { class: "howto-sort-zone would" }, [
+      el("div", { class: "howto-sort-zone-label", text: "✅ Would do" }),
+      el("div", { class: "card action howto-sort-card howto-anim-drop", style: "animation-delay:0.3s;", text: "run a mile in jeans" }),
+    ])
   );
+  wrap.appendChild(
+    el("div", { class: "howto-sort-zone wouldnt" }, [
+      el("div", { class: "howto-sort-zone-label", text: "🚫 Wouldn't do" }),
+      el("div", { class: "card action howto-sort-card howto-anim-drop", style: "animation-delay:0.6s;", text: "eat a ghost pepper" }),
+    ])
+  );
+  return wrap;
+}
+
+function sceneRank() {
+  const wrap = el("div", { class: "howto-scene howto-scene-rank" });
+  const zone = el("div", { class: "howto-sort-zone would howto-rank-zone" });
+  zone.appendChild(el("div", { class: "howto-sort-zone-label", text: "✅ Would do" }));
+  zone.appendChild(el("div", { class: "rank-label rank-label-top", text: "Easiest" }));
+  zone.appendChild(
+    el("div", { class: "card action howto-sort-card howto-anim-drop", style: "animation-delay:0.2s;", text: "run a mile in jeans" })
+  );
+  zone.appendChild(
+    el("div", { class: "card action howto-sort-card howto-anim-drop", style: "animation-delay:0.45s;", text: "eat a ghost pepper" })
+  );
+  zone.appendChild(el("div", { class: "rank-label rank-label-bottom", text: "Hardest" }));
+  wrap.appendChild(zone);
   return wrap;
 }
 
 function sceneScore() {
   const wrap = el("div", { class: "howto-scene howto-scene-score" });
-  wrap.appendChild(
-    el("div", { class: "card action howto-dare-card howto-scored" }, [
-      document.createTextNode("run a mile in jeans"),
-      el("span", { class: "pick-tag most howto-anim-pop", text: "MOST (+1)" }),
-    ])
-  );
-  wrap.appendChild(
-    el("div", { class: "card action howto-dare-card howto-scored" }, [
+  const zone = el("div", { class: "howto-sort-zone would howto-rank-zone" });
+  zone.appendChild(el("div", { class: "howto-sort-zone-label", text: "✅ Would do" }));
+  zone.appendChild(el("div", { class: "card action howto-sort-card howto-dimmed", text: "run a mile in jeans" }));
+  zone.appendChild(
+    el("div", { class: "card action howto-sort-card howto-scored" }, [
       document.createTextNode("eat a ghost pepper"),
-      el("span", { class: "pick-tag least howto-anim-pop", style: "animation-delay:0.2s;", text: "LEAST (+1)" }),
+      el("span", { class: "winner-badge howto-anim-pop", style: "animation-delay:0.3s;", text: "🏆 wins" }),
     ])
   );
+  wrap.appendChild(zone);
   return wrap;
 }
 
@@ -378,11 +398,11 @@ function renderRulesBlurb() {
   const wrap = el("div", { class: "card", style: "font-weight: 400; font-size: 0.9rem;" });
   wrap.innerHTML = `
     <strong>How to play:</strong> Each round a condition is read (e.g. "win a
-    new car"). Everyone but the judge secretly plays an action card
-    answering "what would you do for this?" The judge then picks the
-    <strong>MOST</strong> extreme thing they'd do, and the
-    <strong>LEAST</strong> — the first thing they wouldn't. Both of those
-    players score a point. First to the target score wins.
+    new car"). Everyone but the judge secretly plays an action card — their
+    dare for it. The judge sorts every dare into "Would do" or "Wouldn't
+    do," then ranks the "Would do" pile from easiest to hardest. The
+    <strong>hardest one they'd still do</strong> wins the round — the best
+    dare. First to the target score wins the game.
   `;
   return wrap;
 }
@@ -437,6 +457,8 @@ function renderGame() {
         ui.revealed = true;
         render();
       });
+    case PHASES.ORDERING:
+      return renderOrdering();
     case PHASES.REVEAL:
       return renderReveal();
     case PHASES.GAME_OVER:
@@ -471,13 +493,13 @@ function renderConditionReveal() {
       text: "Everyone else is about to secretly submit a card. Read the goal below before you start.",
     })
   );
+  screen.appendChild(renderCriteriaCallout(game.judge.name));
   screen.appendChild(
     el("div", { class: "card condition" }, [
       el("span", { class: "card-kicker", text: "The condition is…" }),
       document.createTextNode(game.condition),
     ])
   );
-  screen.appendChild(renderCriteriaCallout(game.roundGoal));
   screen.appendChild(
     el("button", {
       class: "btn-primary",
@@ -503,8 +525,8 @@ function renderSubmitting() {
 
   const screen = el("div", { class: "screen" });
   screen.appendChild(el("p", { class: "subtitle", text: `${player.name}, pick your card for:` }));
+  screen.appendChild(renderCriteriaCallout(game.judge.name));
   screen.appendChild(el("div", { class: "card condition" }, [document.createTextNode(game.condition)]));
-  screen.appendChild(renderCriteriaCallout(game.roundGoal));
   screen.appendChild(el("h3", { text: "Your hand" }));
 
   const grid = el("div", { class: "hand-grid" });
@@ -527,7 +549,7 @@ function renderSubmitting() {
 
 function renderJudging() {
   const screen = el("div", { class: "screen" });
-  screen.appendChild(el("h2", { text: `${game.judge.name}, where's the line?` }));
+  screen.appendChild(el("h2", { text: "Step 1: Would you do it?" }));
   screen.appendChild(
     el("div", { class: "card condition" }, [
       el("span", { class: "card-kicker", text: "Condition" }),
@@ -537,7 +559,7 @@ function renderJudging() {
   screen.appendChild(
     el("p", {
       class: "subtitle",
-      text: "Drag every card out of the middle pile into a bucket. Within a bucket, order matters — the card closest to the middle is the one that counts.",
+      text: 'Sort every card into Would do or Wouldn\'t do. You need at least one in "Would do" to continue — you\'ll rank those next.',
     })
   );
 
@@ -582,13 +604,69 @@ function renderJudging() {
         text: `${game.neutralIds.length} card${game.neutralIds.length === 1 ? "" : "s"} still need${game.neutralIds.length === 1 ? "s" : ""} to be sorted.`,
       })
     );
+  } else if (game.wouldIds.length === 0) {
+    screen.appendChild(el("p", { class: "subtitle", text: 'You need at least one "Would do" card to continue.' }));
   }
 
   screen.appendChild(
     el("button", {
       class: "btn-primary",
+      text: game.wouldIds.length === 1 ? "Confirm" : 'Next: Rank your "Would do" cards',
+      disabled: !game.canConfirmSplit(),
+      onclick: () => {
+        game.confirmSplit();
+        render();
+      },
+    })
+  );
+  return screen;
+}
+
+function renderOrdering() {
+  const screen = el("div", { class: "screen" });
+  screen.appendChild(el("h2", { text: "Step 2: Rank them" }));
+  screen.appendChild(
+    el("div", { class: "card condition" }, [
+      el("span", { class: "card-kicker", text: "Condition" }),
+      document.createTextNode(game.condition),
+    ])
+  );
+  screen.appendChild(
+    el("p", {
+      class: "subtitle",
+      text: "Drag to order from easiest (top) to hardest (bottom). The bottom card wins — the best dare, the most difficult thing you'd still do for it.",
+    })
+  );
+
+  const container = el("div", { class: "judge-order" });
+  const wouldCards = el("div", { class: "bucket-cards", "data-bucket": "would" });
+  const wouldBucket = el("div", { class: "bucket would-bucket" }, [
+    el("div", { class: "bucket-header would-header", text: "✅ Would do" }),
+  ]);
+  wouldBucket.appendChild(el("div", { class: "rank-label rank-label-top", text: "Easiest" }));
+  wouldBucket.appendChild(wouldCards);
+  wouldBucket.appendChild(el("div", { class: "rank-label rank-label-bottom", text: "Hardest" }));
+
+  game.wouldIds.forEach((id, i) => {
+    const row = renderJudgeCardRow(id, game.cardFor(id));
+    if (i === game.wouldIds.length - 1) {
+      row.appendChild(el("span", { class: "winner-badge", text: "🏆 wins" }));
+    }
+    wouldCards.appendChild(row);
+  });
+
+  container.appendChild(wouldBucket);
+  screen.appendChild(container);
+
+  initBucketDragSort([wouldCards], (orderedIds) => {
+    game.applyOrder(orderedIds);
+    render();
+  });
+
+  screen.appendChild(
+    el("button", {
+      class: "btn-primary",
       text: "Confirm",
-      disabled: !game.canConfirmJudging(),
       onclick: () => {
         game.confirmJudging();
         render();
@@ -705,22 +783,13 @@ function renderReveal() {
   const list = el("div", { class: "submission-list" });
   for (const { playerId, card } of game.submissions) {
     const player = game.players.find((p) => p.id === playerId);
-    const isMost = game.mostPick === playerId;
-    const isLeast = game.leastPick === playerId;
     const scored = game.winners.includes(playerId);
     const row = el("div", { class: `reveal-row${scored ? " winner" : ""}` });
-    if (isMost) {
-      row.appendChild(
-        el("span", { class: `pick-tag most${scored ? "" : " unscored"}`, text: scored ? "MOST (+1)" : "MOST" })
-      );
-    }
-    if (isLeast) {
-      row.appendChild(
-        el("span", { class: `pick-tag least${scored ? "" : " unscored"}`, text: scored ? "LEAST (+1)" : "LEAST" })
-      );
-    }
     row.appendChild(el("span", { class: "player-name", text: player.name }));
     row.appendChild(document.createTextNode(card));
+    if (scored) {
+      row.appendChild(el("span", { class: "pick-tag most", text: "🏆 Best dare (+1)" }));
+    }
     list.appendChild(row);
   }
   screen.appendChild(list);

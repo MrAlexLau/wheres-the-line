@@ -6,40 +6,40 @@
 It can be played pass-and-play on one device or multiplayer from separate
 devices in a shared room.
 
-Each round poses a **Condition** — a hypothetical scenario ("win a new car",
-"get out of a speeding ticket", "become mayor of your town"). Every
-non-judging player secretly submits an **Action** card from their hand,
-answering the implicit question: *"What would you do to make this happen?"*
+Each round poses a **Condition** — a hypothetical scenario/reward ("win a
+new car", "get out of a speeding ticket", "become mayor of your town").
+Every non-judging player secretly submits an **Action** card from their
+hand — their **dare** — answering the implicit question: *"What's the most
+intense thing you think the judge would do for this?"*
 
-The judge reads all of the submitted actions (anonymously, shuffled) and
-decides where the line is:
+The judge reads all of the submitted dares (anonymously, shuffled) in two
+steps:
 
-- **The MOST card** — the most extreme action the judge decides they
-  personally *would* do for the condition.
-- **The LEAST card** — the least extreme action the judge decides they
-  personally would *not* do — i.e. the point past which they refuse.
+1. **Split.** Sort every dare into **Would do** or **Wouldn't do**. At least
+   one dare has to land in "Would do" to continue — otherwise there's
+   nothing to judge.
+2. **Rank.** Order the "Would do" pile from easiest to hardest. **The
+   hardest one — the best dare** — is the only card that scores. Everyone
+   else, including every card in "Wouldn't do," scores nothing that round.
 
-The two players who submitted those two cards each score a point. Everyone
-else scores nothing that round. Play continues, rotating the judge, until a
-player reaches the target score (default: 7 points), at which point the game
-ends and a winner is declared.
+Only one player scores per round. Play continues, rotating the judge, until
+a player reaches the target score (default: 7 points), at which point the
+game ends and a winner is declared.
 
-Because the judge is picking two ends of a spectrum rather than one "best"
-card, the game rewards players who read the *specific judge* well at both
-extremes, not just whoever can write the funniest card.
+Because scoring always comes down to the single most extreme thing the
+*specific judge* would actually do, the game rewards players who read that
+judge well, not just whoever can write the funniest card.
 
 ## 2. Terminology
 
 | Term | Meaning |
 |---|---|
-| Condition card | The round's prompt/scenario, read aloud by the judge. |
-| Action card | A card describing a hypothetical action, played face-down as an answer. |
-| Judge | The player who reads submissions and places the line for the round. Rotates every round. |
-| The MOST pick | The action the judge would go furthest to do. Scores a point for its player. |
-| The LEAST pick | The action that crosses the judge's line — the least they'd do / first thing they'd refuse. Scores a point for its player. |
-| Hand | The set of Action cards a player currently holds (default size: 7). |
-| Round | One full cycle: condition drawn → submissions → judging → scoring → hand refill. |
-| Round Goal | Which pick(s) score this round: MOST only, LEAST only, or both ("in between"). Randomly chosen each round; see §4a. |
+| Condition card | The round's prompt/scenario/reward, read aloud by the judge. |
+| Action card / dare | A card describing a hypothetical action, played face-down as an answer. |
+| Judge | The player who reads submissions and judges the round. Rotates every round. |
+| Best dare | The single dare that scores: the hardest thing in the judge's "Would do" pile — the most extreme thing they'd still do. |
+| Hand | The set of Action cards a player currently holds (default size: 5). |
+| Round | One full cycle: condition drawn → submissions → judging (split, then rank) → scoring → hand refill. |
 
 ## 3. Players & Setup
 
@@ -58,77 +58,51 @@ extremes, not just whoever can write the funniest card.
 
 1. **Judge reveal.** Screen announces the round's judge and shows a "pass
    the device to <Judge>" interstitial, then displays the drawn Condition
-   card and the round's **Goal** (see §4a). The judge taps "Start round"
-   once everyone is ready.
+   card. The judge taps "Start round" once everyone is ready.
 2. **Blind submission, one player at a time.** For each non-judge player in
    turn:
    - Interstitial: "Pass the device to <Player>."
-   - That player sees the Condition and a large, high-contrast **criteria
-     callout** — "Goal: Submit an action the judge <u>WOULD</u> do" /
-     "<u>WOULD NOT</u> do" / either, depending on this round's Goal — before
-     they view their hand and tap one Action card to submit face-down. The
-     card leaves their hand.
+   - That player sees a large, high-contrast **criteria callout** — "Goal:
+     play the <u>most intense</u> card that <Judge> would do for:" — directly
+     above the Condition card, before they view their hand and tap one
+     Action card to submit face-down. The card leaves their hand.
    - Screen advances to the next submitting player. The judge does not
      submit a card.
-3. **Judging.** Device passes back to the judge. All submitted actions are
-   shown shuffled and anonymized (no player names attached), starting in a
-   dashed, neutral **"🤔 Not sorted yet"** pile between two labeled
-   drag-and-drop buckets: **"✅ Would do"** above it and **"🚫 Wouldn't do"**
-   below it. The judge:
-   - Drags each card out of the neutral pile into whichever bucket it
-     belongs in. **Judging can't be confirmed until the neutral pile is
-     empty** — every card must be sorted one way or the other.
-   - Drags within a bucket to order cards by how extreme they are — the
-     card nearest the middle in each bucket is the one that counts.
-   - Either bucket may end up empty (they wouldn't do any of them, or
-     they'd do all of them) once everything is sorted.
-   The bottom-most card in "Would do" is **the MOST** pick; the top-most
-   card in "Wouldn't do" is **the LEAST** pick. Either pick is simply
-   absent when its bucket is empty.
-4. **Reveal & scoring.** The app reveals which player played each submitted
-   card, highlights whichever picks actually scored per the round's Goal,
-   and awards one point each to those players' totals. Since each player
-   submits at most one card per round and the line always separates two
-   distinct cards, MOST and LEAST — when both apply — are always two
-   different players.
-5. **Hand refill.** Every player who submitted a card draws back up to their
+3. **Judging, step 1 — split.** Device passes back to the judge. All
+   submitted actions are shown shuffled and anonymized (no player names
+   attached), starting in a dashed, neutral **"🤔 Not sorted yet"** pile
+   between two labeled drag-and-drop buckets: **"✅ Would do"** above it and
+   **"🚫 Wouldn't do"** below it. The judge drags each card into whichever
+   bucket it belongs in. This step can't be confirmed until the neutral pile
+   is empty **and** at least one card is in "Would do" — with zero, there's
+   nothing to rank or score.
+4. **Judging, step 2 — rank.** Only the "Would do" pile carries forward. The
+   judge drags to order it from **easiest (top) to hardest (bottom)**. The
+   bottom card — the **best dare** — is shown live with a 🏆 badge as the
+   judge drags. If exactly one card made it into "Would do" in step 1, this
+   step is skipped entirely (nothing to rank) and it wins by default.
+5. **Reveal & scoring.** The app reveals which player played each submitted
+   card, tags the winning dare with "🏆 Best dare (+1)", and awards it one
+   point. Every other card — including the whole "Wouldn't do" pile —
+   scores nothing.
+6. **Hand refill.** Every player who submitted a card draws back up to their
    hand size from the Action deck. If the deck runs out, the discard pile
    (previously submitted/seen cards) is reshuffled into a new deck.
-6. **Next judge.** Judge role passes to the next player in order; a new
-   Condition card is drawn and a new round Goal is chosen; return to step 1.
-7. **Win check.** After scoring, if any player's total ≥ target score, the
+7. **Next judge.** Judge role passes to the next player in order; a new
+   Condition card is drawn; return to step 1.
+8. **Win check.** After scoring, if any player's total ≥ target score, the
    game ends immediately and the Game Over screen is shown instead of
    advancing to the next round.
 
-### 4a. Round Goals
-
-Each round is randomly assigned one of these Goals, shown to the table
-alongside the Condition card:
-
-| Goal | Who scores (+1) | Eligibility |
-|---|---|---|
-| **Most likely to do** | MOST pick (card just above the line) | Always available |
-| **Least likely to do** | LEAST pick (card just below the line) | Always available |
-| **Anything in between scores** | Both the MOST and LEAST picks | Only offered when there are **3+ submitters (4+ total players)** |
-
-Landing on the wrong side of the line simply scores nothing — there's no
-penalty. Submitters are told the active Goal before they pick a card, since
-it changes the right answer: in a "most" round you're aiming for something
-the judge would actually do; too tame and it just won't score.
-
-The "in between" goal is excluded below 4 players because with only 2
-submitters, the line has nowhere else to go — MOST and LEAST are always
-just the same two cards, so there's no real judgment being tested. If the
-line ends up at an extreme (above/below every card) in a round whose Goal
-needs that missing side, nobody scores that round — a legitimate outcome,
-not an error state.
-
 ## 5. Scoring & End of Game
 
-- +1 point for the MOST pick, +1 point for the LEAST pick, per round.
-- First player to reach the target score wins. Ties are possible only if
-  the judge's two picks belong to two different players who are both at or
-  above target after the same round; both are shown as winners.
+- +1 point for the best dare (the hardest card in "Would do") per round.
+  Nothing else scores — landing in "Wouldn't do," or anywhere in "Would do"
+  except the very hardest, is worth zero, with no penalty either.
+- First player to reach the target score wins. Since only one card can
+  score per round, a tie can only happen if the game somehow ends with two
+  players sharing the same top score with no further rounds played — both
+  are shown as winners.
 - Game Over screen shows final standings (sorted by score) and offers
   "Play again" (same players/settings, fresh shuffled decks) and "New game"
   (return to setup).
@@ -330,8 +304,11 @@ part of the implementation:
   needs to repaint, so there's no more hand-rolled "did anything actually
   change" diffing in the client.
 - NocodeBackend-compatible enum and datetime serialization.
-- Pass-and-play remains available at `/pass-and-play/`, untouched by the
-  Svelte rewrite (see §10).
+- Pass-and-play remains available at `/pass-and-play/`, kept outside the
+  Svelte build (see §10) — its scoring rule and judging flow were brought in
+  line with multiplayer's (best dare / two-step judging, see §1/§4) even
+  though its UI stays plain HTML/CSS/JS. It also has its own animated "How
+  to play" intro, shown on first load and replayable from the setup screen.
 
 When testing startup repeatedly, use a fresh room after a failed or
 interrupted start. A start that was interrupted after deck creation can leave
