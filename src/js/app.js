@@ -50,9 +50,15 @@ function resetReveal() {
   ui.revealed = false;
 }
 
+/** Shown once automatically on first load, and replayable from the setup screen. */
+let showIntro = true;
+let introStep = 0;
+
 function render() {
   root.innerHTML = "";
-  if (!game) {
+  if (showIntro) {
+    root.appendChild(renderIntro());
+  } else if (!game) {
     root.appendChild(renderSetup());
   } else {
     root.appendChild(renderGame());
@@ -88,6 +94,170 @@ function brand() {
   ]);
 }
 
+// ---------- how-to-play intro ----------
+
+const INTRO_SLIDES = [
+  {
+    title: "Where's the Line?",
+    body: "A party game about knowing your friends — pass the device around and play.",
+    scene: sceneWelcome,
+  },
+  {
+    title: "Read the condition",
+    body: 'Each round starts with a condition — a reward everyone\'s chasing. Something like "win a new car."',
+    scene: sceneCondition,
+  },
+  {
+    title: "Play your dare",
+    body: "Everyone but the judge secretly picks an action card from their hand: their dare for it.",
+    scene: sceneDares,
+  },
+  {
+    title: "The judge sorts them",
+    body: "The judge reads every dare anonymously and sorts each one: would they actually do it, or not?",
+    scene: sceneSort,
+  },
+  {
+    title: "Most & least both score",
+    body: "The most extreme “yes” and the least likely “yes” each win a point for whoever played them.",
+    scene: sceneScore,
+  },
+  {
+    title: "First to the target wins",
+    body: "The judge rotates every round. First player to reach the target score takes it.",
+    scene: sceneWin,
+  },
+];
+
+function renderIntro() {
+  const screen = el("div", { class: "screen howto-screen" });
+  screen.appendChild(brand());
+
+  const slide = INTRO_SLIDES[introStep];
+
+  const dots = el("div", { class: "howto-dots" });
+  INTRO_SLIDES.forEach((_, i) => {
+    dots.appendChild(el("span", { class: `howto-dot${i === introStep ? " active" : ""}` }));
+  });
+  screen.appendChild(dots);
+
+  screen.appendChild(el("div", { class: "howto-stage" }, [slide.scene()]));
+  screen.appendChild(el("h2", { class: "howto-title", text: slide.title }));
+  screen.appendChild(el("p", { class: "subtitle howto-body", text: slide.body }));
+
+  const nav = el("div", { class: "btn-row howto-nav" });
+  if (introStep > 0) {
+    nav.appendChild(
+      el("button", {
+        class: "btn-secondary",
+        text: "Back",
+        onclick: () => {
+          introStep -= 1;
+          render();
+        },
+      })
+    );
+  } else {
+    nav.appendChild(
+      el("button", {
+        class: "btn-secondary",
+        text: "Skip",
+        onclick: () => {
+          showIntro = false;
+          render();
+        },
+      })
+    );
+  }
+  const isLast = introStep === INTRO_SLIDES.length - 1;
+  nav.appendChild(
+    el("button", {
+      class: "btn-primary",
+      text: isLast ? "Let's play!" : "Next",
+      onclick: () => {
+        if (isLast) {
+          showIntro = false;
+          introStep = 0;
+        } else {
+          introStep += 1;
+        }
+        render();
+      },
+    })
+  );
+  screen.appendChild(nav);
+
+  return screen;
+}
+
+function sceneWelcome() {
+  const wrap = el("div", { class: "howto-scene howto-scene-welcome" });
+  wrap.appendChild(el("div", { class: "howto-mini-card howto-anim-fall", style: "animation-delay:0s;", text: "🏆" }));
+  wrap.appendChild(el("div", { class: "howto-mini-card howto-anim-fall", style: "animation-delay:0.15s;", text: "🎲" }));
+  wrap.appendChild(el("div", { class: "howto-mini-card howto-anim-fall", style: "animation-delay:0.3s;", text: "🔥" }));
+  return wrap;
+}
+
+function sceneCondition() {
+  const wrap = el("div", { class: "howto-scene" });
+  wrap.appendChild(
+    el("div", { class: "card condition howto-anim-fall howto-condition-card" }, [
+      el("span", { class: "card-kicker", text: "The condition is…" }),
+      document.createTextNode("win a new car"),
+    ])
+  );
+  return wrap;
+}
+
+function sceneDares() {
+  const wrap = el("div", { class: "howto-scene howto-scene-dares" });
+  const captions = ["run a mile in jeans", "eat a ghost pepper", "sing karaoke solo"];
+  captions.forEach((text, i) => {
+    wrap.appendChild(
+      el("div", {
+        class: "card action howto-dare-card howto-anim-fan",
+        style: `animation-delay:${i * 0.18}s;`,
+        text,
+      })
+    );
+  });
+  return wrap;
+}
+
+function sceneSort() {
+  const wrap = el("div", { class: "howto-scene howto-scene-sort" });
+  wrap.appendChild(el("div", { class: "howto-sort-zone would", text: "✅ Would do" }));
+  wrap.appendChild(el("div", { class: "howto-sort-zone wouldnt", text: "🚫 Wouldn't do" }));
+  wrap.appendChild(el("div", { class: "card action howto-sort-card howto-anim-slide-right", text: "run a mile in jeans" }));
+  wrap.appendChild(
+    el("div", { class: "card action howto-sort-card howto-anim-slide-left", text: "eat a ghost pepper" })
+  );
+  return wrap;
+}
+
+function sceneScore() {
+  const wrap = el("div", { class: "howto-scene howto-scene-score" });
+  wrap.appendChild(
+    el("div", { class: "card action howto-dare-card howto-scored" }, [
+      document.createTextNode("run a mile in jeans"),
+      el("span", { class: "pick-tag most howto-anim-pop", text: "MOST (+1)" }),
+    ])
+  );
+  wrap.appendChild(
+    el("div", { class: "card action howto-dare-card howto-scored" }, [
+      document.createTextNode("eat a ghost pepper"),
+      el("span", { class: "pick-tag least howto-anim-pop", style: "animation-delay:0.2s;", text: "LEAST (+1)" }),
+    ])
+  );
+  return wrap;
+}
+
+function sceneWin() {
+  const wrap = el("div", { class: "howto-scene howto-scene-win" });
+  wrap.appendChild(el("div", { class: "howto-trophy howto-anim-bounce", text: "🏆" }));
+  return wrap;
+}
+
 // ---------- setup screen ----------
 
 function renderSetup() {
@@ -97,6 +267,17 @@ function renderSetup() {
   screen.appendChild(el("h2", { text: "Set up your game" }));
   screen.appendChild(
     el("p", { class: "subtitle", text: "Add 3–8 players, then start. Judge order follows this list." })
+  );
+  screen.appendChild(
+    el("button", {
+      class: "btn-secondary howto-replay",
+      text: "❔ How to play",
+      onclick: () => {
+        showIntro = true;
+        introStep = 0;
+        render();
+      },
+    })
   );
 
   const list = el("div", { class: "player-list" });
