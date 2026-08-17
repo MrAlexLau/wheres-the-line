@@ -24,7 +24,7 @@ function defaultPlayerNames(count) {
 
 let setup = {
   players: defaultPlayerNames(3),
-  targetScore: 7,
+  targetScore: 3,
   handSize: 5,
   error: "",
 };
@@ -86,7 +86,7 @@ function brand() {
 
 const INTRO_SLIDES = [
   {
-    title: "Where's the Line?",
+    title: "",
     body: "Each round, one player is the judge. Everyone else secretly submits an action card — their dare.",
     scene: sceneWelcome,
   },
@@ -185,9 +185,6 @@ function renderIntro() {
 
 function sceneWelcome() {
   const wrap = el("div", { class: "howto-scene howto-scene-welcome" });
-  wrap.appendChild(el("div", { class: "howto-mini-card howto-anim-fall", style: "animation-delay:0s;", text: "🏆" }));
-  wrap.appendChild(el("div", { class: "howto-mini-card howto-anim-fall", style: "animation-delay:0.15s;", text: "🎲" }));
-  wrap.appendChild(el("div", { class: "howto-mini-card howto-anim-fall", style: "animation-delay:0.3s;", text: "🔥" }));
   return wrap;
 }
 
@@ -356,7 +353,7 @@ function renderSetup() {
         max: "15",
         value: String(setup.targetScore),
         oninput: (e) => {
-          setup.targetScore = Number(e.target.value) || 7;
+          setup.targetScore = Number(e.target.value) || 3;
         },
       }),
     ])
@@ -850,7 +847,7 @@ function renderGameOver() {
         text: "New game",
         onclick: () => {
           game = null;
-          setup = { players: defaultPlayerNames(3), targetScore: 7, handSize: 5, error: "" };
+          setup = { players: defaultPlayerNames(3), targetScore: 3, handSize: 5, error: "" };
           render();
         },
       }),

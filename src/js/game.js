@@ -67,7 +67,7 @@ export class Game {
    * @param {number} [opts.targetScore]
    * @param {number} [opts.handSize]
    */
-  constructor({ playerNames, conditions, actions, targetScore = 7, handSize = 5 }) {
+  constructor({ playerNames, conditions, actions, targetScore = 3, handSize = 5 }) {
     if (playerNames.length < 3) {
       throw new Error("Where's the Line requires at least 3 players.");
     }

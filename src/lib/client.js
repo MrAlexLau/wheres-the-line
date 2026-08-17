@@ -157,7 +157,7 @@ export async function createRoom() {
     const roomId = await api.create("rooms", {
       room_code: randomRoomCode(),
       status: "LOBBY",
-      target_score: Number(f.targetScore) || 7,
+      target_score: Number(f.targetScore) || 3,
       hand_size: Number(f.handSize) || 5,
       current_round_number: 0,
     });

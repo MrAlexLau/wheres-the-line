@@ -9,7 +9,7 @@ import { writable, derived } from "svelte/store";
 import { sameId } from "./ids.js";
 
 export const screen = writable("host-setup"); // host-setup | join | lobby | in-round
-export const form = writable({ name: "", roomCode: "", targetScore: 7, handSize: 5, error: "" });
+export const form = writable({ name: "", roomCode: "", targetScore: 3, handSize: 5, error: "" });
 
 export const session = writable(null); // {roomId, playerId, sessionToken}
 export const room = writable(null);
@@ -32,7 +32,7 @@ export const judgeName = derived(
 export const isJudge = derived([me, round], ([$me, $round]) => sameId($me?.id, $round?.judge_player_id));
 
 export function resetRoomState() {
-  form.set({ name: "", roomCode: "", targetScore: 7, handSize: 5, error: "" });
+  form.set({ name: "", roomCode: "", targetScore: 3, handSize: 5, error: "" });
   room.set(null);
   players.set([]);
   round.set(null);
