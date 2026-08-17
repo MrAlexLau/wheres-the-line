@@ -1,22 +1,10 @@
 {
-  "name": "wheres-the-line",
+  "name": "wheres-the-line-pass-and-play",
   "version": "2.0.12",
-  "description": "A pass-and-play party game about knowing where your friends draw the line.",
+  "description": "A pass-and-play party game: submit the boldest dare you think the judge would actually go through with.",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "devl": "npm run dev",
-    "build": "vite build",
-    "preview": "vite preview",
-    "dev:mp": "netlify dev",
-    "bump": "node scripts/bump-version.mjs"
-  },
-  "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^7.3.0",
-    "netlify-cli": "^17.38.0",
-    "svelte": "^5.56.9",
-    "vite": "^8.2.1",
-    "vite-plugin-static-copy": "^4.1.1"
+    "dev": "npx http-server . -p 8080 -c-1 -o"
   }
 }
