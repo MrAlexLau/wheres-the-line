@@ -1,6 +1,6 @@
 {
   "name": "wheres-the-line",
-  "version": "2.0.12",
+  "version": "2.0.13",
   "description": "A pass-and-play party game about knowing where your friends draw the line.",
   "private": true,
   "type": "module",
