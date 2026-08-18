@@ -185,6 +185,9 @@ function renderIntro() {
 
 function sceneWelcome() {
   const wrap = el("div", { class: "howto-scene howto-scene-welcome" });
+  wrap.appendChild(el("div", { class: "howto-mini-card howto-anim-fall", style: "animation-delay:0s;" }));
+  wrap.appendChild(el("div", { class: "howto-mini-card howto-anim-fall", style: "animation-delay:0.15s;" }));
+  wrap.appendChild(el("div", { class: "howto-mini-card howto-anim-fall", style: "animation-delay:0.3s;" }));
   return wrap;
 }
 
